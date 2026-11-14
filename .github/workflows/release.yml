@@ -1,0 +1,42 @@
+name: Release
+
+# Runs when a version tag is pushed, e.g.:
+#   git tag v0.1.2
+#   git push origin v0.1.2
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches Cargo.toml version
+        shell: pwsh
+        run: |
+          $v = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          if ("v$v" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} doesn't match Cargo.toml version $v" }
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build and package
+        shell: pwsh
+        run: ./package.ps1
+
+      - name: Name the zip after the version
+        shell: pwsh
+        run: Rename-Item dist/NowPlaying.zip "NowPlaying-${{ github.ref_name }}.zip"
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/NowPlaying-${{ github.ref_name }}.zip
+          generate_release_notes: true
