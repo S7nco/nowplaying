@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 use tokio::sync::broadcast;
-use tower_http::{cors::CorsLayer, services::ServeDir, set_header::SetResponseHeaderLayer};
+use tower_http::{services::ServeDir, set_header::SetResponseHeaderLayer};
 
 // ============================================================
 // Web server: routes and startup
@@ -258,8 +258,7 @@ pub async fn run() {
         .layer(SetResponseHeaderLayer::overriding(
             header::CACHE_CONTROL,
             HeaderValue::from_static("no-cache"),
-        ))
-        .layer(CorsLayer::permissive());
+        ));
 
     // .unwrap() is used to handle any errors that may occur when starting the server. If an error occurs, the program will panic and print the error message.
     let port = config::get().port;

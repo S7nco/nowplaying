@@ -81,9 +81,10 @@ fn list_themes(dir: &str) -> Vec<String> {
     names
 }
 
-// Every theme that is installed (all three folders)
+// Every theme that is installed (all four folders)
 fn installed_themes() -> Vec<String> {
     let mut all = list_themes("static/themes/examples");
+    all.extend(list_themes("static/themes/game-inspired"));
     all.extend(list_themes("static/themes/styles"));
     all.extend(list_themes("static/themes/custom"));
     all

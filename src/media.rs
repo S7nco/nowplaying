@@ -77,16 +77,6 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
     let mut found:Option<(_, usize, bool)> = None;
     for s in manager.GetSessions()? {
         let id = s.SourceAppUserModelId()?.to_string().to_lowercase();
-        // Troubleshooting block
-        {
-            static SEEN: Mutex<Vec<String>> = Mutex::new(Vec::new());
-            let mut seen = SEEN.lock().unwrap();
-            if !seen.contains(&id) {
-                //crate::log(&format!("Seen new session ID: {id}"));
-                seen.push(id.clone());
-            }
-        }
-        // End of troubleshooting block
         let Some(index) = wanted.iter().position(|w| id.contains(w.as_str())) else {
             continue;
         };
