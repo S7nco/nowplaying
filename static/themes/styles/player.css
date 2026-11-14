@@ -1,0 +1,306 @@
+/* Player theme */
+:root {
+    --overlay-width: 440px;
+    --overlay-height: 360px;
+    --panel-bg: #63625d;
+
+/* Cassette Tape Look */
+    --stripe: #e4572e;    /* color band across the top of the label */
+    --ink: #1f2f6b;       /* ballpoint pen color for the text */
+    --paper: #f1e9d2;     /* label paper */
+    --tape: #5a4130;      /* tape (brown) */
+
+    --font: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+
+    --text: var(--ink);
+    --text-shadow: none;
+    --weight: 400;
+    --title-color: var(--ink);
+    --title-size: 22px;
+    --artist-size: 14px;
+    --album-size: 14px;
+    --secondary-opacity: 0.85;
+
+    --accent: var(--ink);
+}
+
+@keyframes reel { to { transform: rotate(360deg); } }
+
+#title, #artist, #album {
+    padding: 0 0 5px;
+    margin: 0 0 -5px;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 14px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 14px), transparent);
+}
+
+/* -------------------- Body of the Player -------------------- */
+#overlay {
+    display: block;
+    isolation: isolate;
+    border-radius: 12px;
+    background: 
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 4px),
+        linear-gradient(#6a6964, #4f4e4a 55%, #44433f);
+    box-shadow: 
+        inset 0 2px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -3px 0 rgba(0, 0, 0, 0.35),
+        0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* -------------------- The Cassette -------------------- */
+/* The Body of the Cassette */
+#extra-3 {
+    display: block;
+    position: absolute;
+    left: 30px; top: 20px;
+    width: 370px;
+    height: 240px;
+    border-radius: 10px;
+    background: 
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 4px), 
+        linear-gradient(#97958c, #7a7870 60%, #66645d);
+    box-shadow: 
+        inset 0 0 0 2px rgba(255, 255, 255, 0.14),
+        inset 0 0 0 8px rgba(0, 0, 0, 0.05),
+        inset 0 0 0 9px rgba(255, 255, 255, 0.1),
+        inset 0 -14px 20px rgba(0, 0, 0, 0.2),
+        0 2px 6px rgba(0, 0, 0, 0.6);
+    z-index: 1;
+}
+
+/* Bottom Edge */
+#extra-3::before {
+    content: "";
+    position: absolute;
+    left: 60px; bottom: 0;
+    height: 34px;
+    width: 250px;
+    background: 
+        /* lit top edge */
+        linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.28)) top / 100% 1px no-repeat,
+        /* holes with a lit lower rim */
+        radial-gradient(circle at 57px 17px, #0d0d10 0 6px, rgba(255, 255, 255, 0.2) 6.5px 7.5px, transparent 8px),
+        radial-gradient(circle at 193px 17px, #0d0d10 0 6px, rgba(255, 255, 255, .02) 6.5px 7.5px, transparent 8px),
+        /* plate body, more contrast then before */
+        linear-gradient(#6a6a72, #3b3b42 60%, #2e2e34);
+    clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+}
+
+/* Reel Window */
+#extra-3::after {
+    content: "";
+    position: absolute;
+    left: 55px; top: 112px;
+    width: 260px;
+    height: 76px;
+    border-radius: 10px;
+    background: #1a1612;
+    box-shadow: 
+        inset 0 8px 12px rgba(0, 0, 0, 0.85),
+        inset 0 -2px 0 rgba(255, 255, 255, 0.8),
+        0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* -------------------- The Cassette Label -------------------- */
+#song-info {
+    position: absolute;
+    left: 50px;
+    top: 26px;
+    height: 104px;
+    width: 330px;
+    box-sizing: border-box;
+    padding: 24px 16px 6px 16px;     
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 6px;
+    z-index: 3;
+    background:
+        repeating-linear-gradient(transparent 0 22px, rgba(31, 47, 107, 0.13) 22px 23px),
+        var(--paper);
+    /* label: sits slightly into the shell */
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* colored band across the top of the label */
+#song-info::before {
+    content: "";
+    position: absolute; 
+    left: 0; right: 0; top: 0;
+    height: 22px;
+    background: var(--stripe);
+}
+
+#label {
+    display: block;
+    position: absolute;
+    left: 16px;
+    top: 4px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: #fff;
+}
+
+/* -------------------- The Cassette Reels -------------------- */
+#extra-1, #extra-2 {
+    display: block;
+    position: absolute;
+    top: 170px;
+    z-index: 2;
+    border-radius: 50%;
+    background: 
+        radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.22), transparent 45%),
+        radial-gradient(circle at 70% 78%, rgba(0, 0, 0, 0.35), transparent 55%),
+        repeating-radial-gradient(circle, rgba(0, 0, 0, 0.2) 0 1px, transparent 1px 3px),
+        radial-gradient(circle, #7a5a44, var(--tape));
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4), 0 3px 5px rgba(0, 0, 0, 0.6);
+    transition: width 0.3s linear, height 0.3s linear, margin 0.3s linear;
+}
+#extra-1 {
+    --d: calc(38px + (1 - var(--progress, 0)) * 30px);
+    left: calc(215px - 90px);
+    width: var(--d);
+    height: var(--d);
+    margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
+}
+#extra-2 {
+    --d: calc(38px + var(--progress, 0) * 30px);
+    left: calc(215px + 90px);
+    width: var(--d);
+    height: var(--d);
+    margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
+}
+
+/* hub: white disc with a dark center */
+#extra-1::before, #extra-2::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 34px; height: 34px;
+    margin: -17px 0 0 -17px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #141414 0 11px, #ececec 11.5px);
+    box-shadow: 
+        inset 0 0 0 2px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.6);
+    animation: reel 2.4s linear infinite;
+}
+
+/* the six teeth inside the hub */
+#extra-1::after, #extra-2::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 22px; height: 22px;
+    margin: -11px 0 0 -11px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(#ececec 0 14deg, transparent 14deg 60deg);
+    -webkit-mask: radial-gradient(circle, transparent 0 6px, #000 6.5px);
+    mask: radial-gradient(circle, transparent 0 6px, #000 6.5px);
+    animation: reel 2.4s linear infinite;
+}
+
+/* reels stop when the music is paused */
+#overlay[data-playing="0"] #extra-1::before, #overlay[data-playing="0"] #extra-1::after,
+#overlay[data-playing="0"] #extra-2::before, #overlay[data-playing="0"] #extra-2::after {
+    animation-play-state: paused;
+}
+
+/* -------------------- Cassette Window -------------------- */
+/* The window background */
+#overlay::before {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 390px;
+    height: 260px;
+    left: 20px;
+    top: 10px;
+    border-radius: 10px;
+    background: linear-gradient(#1b1b1f, #0e0e11);
+    box-shadow: 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+        0 1px 0 rgba(255, 255, 255, 0.12),
+        0 -1px 0 rgba(0, 0, 0, 0.5);
+    z-index: 0;
+}
+
+/* The glass window over the cassette */
+#overlay::after {
+    content: "";
+    position: absolute;
+    left: 20px;
+    top: 10px;
+    width: 390px;
+    height: 260px;
+    border-radius: 10px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.25),
+        inset 0 0 14px rgba(0, 0, 0, 0.35);
+    background: 
+        linear-gradient(115deg, transparent 44%, rgba(255, 255, 255, 0.06) 44% 50%, transparent 50%), 
+        linear-gradient(115deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05) 30%, transparent 37%),
+        rgba(120, 160, 200, 0.06);
+    z-index: 5;
+    pointer-events: none;
+
+}
+
+/* -------------------- three buttons ----------------------- */
+#extra-4 {
+    display: block;
+    position: absolute;
+    left: 93px;
+    bottom: 24px;
+    z-index: 1;
+    width: 76px;
+    height: 48px;
+    border-radius: 7px;
+    --sym: linear-gradient(to top right, #d5d9e2 50%, transparent 50%) 30px 14px / 16px 10px no-repeat,
+           linear-gradient(to bottom right, #d5d9e2 50%, transparent 50%) 30px 24px / 16px 10px no-repeat;
+}
+#extra-4::before, #extra-4::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 76px;
+    height: 48px;
+}
+#extra-4::before {
+    left: 84px;
+    --sym: linear-gradient(#d5d9e2, #d5d9e2) 29px 14px / 5px 20px no-repeat,
+           linear-gradient(#d5d9e2, #d5d9e2) 42px 14px / 5px 20px no-repeat;
+}
+#extra-4::after {
+    left: 168px;
+    --sym: linear-gradient(to top right, #d5d9e2 50%, transparent 50%) 28px 14px / 14px 10px no-repeat,
+           linear-gradient(to bottom right, #d5d9e2 50%, transparent 50%) 28px 24px / 14px 10px no-repeat,
+           linear-gradient(#d5d9e2, #d5d9e2) 45px 14px / 3px 20px no-repeat;
+}
+
+/* shared button look */
+#extra-4, #extra-4::before, #extra-4::after {
+    --face: linear-gradient(#6d717a, #42454c);
+    border-radius: 7px;
+    background: var(--sym), var(--face);
+    box-shadow: 
+        inset 0 2px 0px rgba(255, 255, 255, 0.22),    /* top lit edge */
+        0 6px 0 #25272c,
+        0 9px 8px rgba(0, 0, 0, 0.5);                      
+}
+
+/* pressed in */
+#overlay[data-playing="1"] #extra-4,
+#overlay[data-playing="0"] #extra-4::before,
+#overlay[data-skip] #extra-4::after {
+    --face: linear-gradient(#2f3238, #464950);
+    box-shadow: 
+        inset 0 2px 5px rgba(0, 0, 0, 0.6),
+        0 1px 0 #25272c;
+    transform: translateY(5px);
+}
+
+/* -------------------- Hidden Elements -------------------- */
+#artwork, #progress {
+    display: none;
+}

@@ -1,0 +1,48 @@
+/* Default look: transparent panel, no padding.
+    Copy this file to start a new theme and change any value.
+    Anything you leave out falls back to the value in style.css */
+
+:root {
+    /* Text */
+    --font: sans-serif;
+    --text: white;
+    --text-shadow: 1px 1px 3px black;
+    --accent: white;                      /* title color and progress bar fill */
+    --weight: 700;                          /* font weight for title, artist, album */
+    --title-size: 32px;
+    --text-size: 20px;                      /* font size for artist and album */
+    --secondary-opacity: 0.85;              /* artist and album (1 = fully bright) */
+    --gap: 12px;                            /* space between artwork and text */
+    --bar-height: 8px;                      /* progress bar thickness */
+
+    /* Title */
+    --title-color: white;   /* title only. Defaults to --accent if left out */
+
+    /* Panel */
+    --overlay-width: 620px;
+    --overlay-height: 180px;
+    --panel-bg: transparent;
+    --padding: 0;
+    --border: none;
+    --radius: 0;
+    --clip: none;                         /* clip-path, for angled corners */
+
+    /* Artwork */
+    --artwork-height: 160px;
+    --artwork-width: 160px;
+    --artwork-radius: 8px;
+
+    /* Progress Bar */
+    --track: rgba(255, 255, 255, 0.3);  /* the empty part of the bar */
+    --bar-radius: 3px;
+
+    /* Extra styling */
+    --bar-color: white;                 /* progress bar fill (defaults to --accent) */
+    --text-align: left;                   /* left, center or right */
+    --title-transform: none;              /* uppercase, lowercase, or none */
+    --title-spacing: normal;              /* letter spacing, e.g. 2px */
+    --artwork-shadow: none;               /* e.g. 0 4px 12px rgba(0,0,0,0,0.5) */
+    --artwork-border: none;               /* e.g. 1px solid black */
+    --time-size: 18px;                    
+    --time-color: white;
+}

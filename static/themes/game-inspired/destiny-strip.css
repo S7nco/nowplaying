@@ -1,0 +1,87 @@
+/* Destiny Quest Strip */
+@font-face {
+    font-family: 'Rajdhani';
+    src: url('/fonts/Rajdhani/Rajdhani-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-display: swap;
+}
+
+:root {
+    --accent: #e8c65a;
+    --font: 'Rajdhani', sans-serif;
+
+    --overlay-width: 440px;
+    --overlay-height: 68px;
+    --panel-bg: linear-gradient(90deg, rgba(10, 12, 18, 0.9), rgba(10, 12, 18, 0.6) 70%, rgba(10, 12, 18, 0));
+    --padding: 0 18px 0 50px;
+    --radius: 0;
+    --border: none;
+
+    --text: #ffffff;
+    --text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    --weight: 700;
+    --title-size: 22px;
+    --title-color: #ffffff;
+    --title-transform: uppercase;
+    --title-spacing: 2px;
+    --artist-size: 13px;
+    --secondary-opacity: 1;
+
+    --marquee-speed: 40;
+    --marquee-pause: 2;
+}
+
+#overlay { border-left: 3px solid var(--accent); }
+
+#artwork, #album, #progress, #time { display: none; }
+
+#song-info { justify-content: center; gap: 1px; }
+
+#label {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+}
+
+#artist {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #aab4c4;
+}
+
+/* Diamond marker */
+#extra-1 {
+    display: block;
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    margin-top: -7px;
+    border: 2px solid var(--accent);
+    transform: rotate(45deg);
+}
+#extra-1::before{
+    content: '';
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 4px; height: 4px;
+    margin: -2px 0 0 -2px;
+    background: var(--accent);
+}
+#overlay[data-playing="0"] #extra-1 { opacity: 0.45; }
+#overlay[data-skip] #extra-1 { animation: turn 0.45s ease-out; }
+@keyframes turn {
+    from { transform: rotate(45deg); }
+    to { transform: rotate(405deg); }
+}
+
+/* progress line along the bottom */
+#extra-2 {
+    display: block;
+    position: absolute;
+    left: 0; bottom: 0;
+    height: 2px;
+    width: calc(var(--progress, 0) * 100%);
+    background: var(--accent);
+}

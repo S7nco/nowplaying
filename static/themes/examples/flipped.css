@@ -1,0 +1,9 @@
+/* Feature: artwork on the right side */
+:root {
+    --panel-bg: transparent;
+    --padding: 0 0 0 16px;      /* top right bottom left: space on the left of the text */
+    --title-color: #ffd43b;   /* title only */
+    --accent: white;          /* progress bar fill */
+}
+
+#artwork { order: 1; } /* everything else is order 0, so the artwork goes last */

@@ -1,0 +1,23 @@
+/* Polaroid: tilted cover in a white frame, handwritten text */
+:root {
+    --font: "Segoe Print", "Segoe Script", cursive;
+    --panel-bg: transparent;
+    --padding: 14px 14px 14px 24px;
+    --gap: 22px;
+    --artwork-width: 150px;
+    --artwork-height: 168px;
+    --artwork-radius: 2px;
+    --artwork-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+    --title-size: 26px;
+    --artist-size: 18px;
+    --text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.85);
+    --title-color: #fff;
+    --accent: #fff;
+    --weight: 400;
+}
+
+#artwork {
+    border: 8px solid #fff;
+    border-bottom-width: 32px;
+    transform: rotate(-4deg);
+}

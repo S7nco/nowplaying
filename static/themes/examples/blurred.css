@@ -1,0 +1,19 @@
+/* Blurred Cover Art Background */
+:root {
+    --panel-bg: #111;       /* Shown until the cover loads */
+}
+
+#overlay {
+    isolation: isolate;     /* keeps the blur layer inside the overlay */
+    overflow: hidden;       /* prevents the blurred background from spilling out */
+}
+
+#overlay::before {
+    content: "";
+    position: absolute;
+    inset: -16px;           /* extends the blur layer beyond the overlay edges */
+    background: var(--cover, none) center / cover no-repeat;
+    filter: blur(12px) brightness(0.55) saturate(1.2);
+    z-index: -1;             /* places the blur layer behind the overlay content */
+    will-change: transform;
+}

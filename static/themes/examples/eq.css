@@ -1,0 +1,31 @@
+/* Feature: equalizer bars (8 bars, 16 blocks each) */
+#eq {
+    display: flex;
+    align-items: flex-end;  /* bars grow upward from the bottom */
+    gap: var(--eq-gap, 4px);               /* space between the bars */
+    height: 96px;           /* height of the equalizer container */
+    flex-shrink: 0;
+}
+
+#eq span {
+    position: relative;
+    width: var(--eq-bar-width, 10px);
+    height: 100%;
+}
+
+/* the filled part: --level (0 to 1) sets how tall it is */
+#eq span::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(var(--level, 0) * 96px);
+    /* 4px block + 2px gap = 6px per segment; 16 segments = 96px total */
+    background: repeating-linear-gradient(
+        to top,
+        var(--eq-color, var(--accent, white)) 0 4px,
+        transparent 4px 6px
+    );
+}
+

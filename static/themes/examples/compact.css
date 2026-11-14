@@ -1,0 +1,15 @@
+/* Feature: compact pill, one scrolling line */
+:root {
+    --overlay-width: 420px;
+    --overlay-height: 56px;
+    --panel-bg: rgba(15, 15, 15, 0.85);
+    --padding: 0 20px;
+    --radius: 28px;
+    --track: rgba(255, 255, 255, 0.25);
+    --bar-radius: 2px;
+}
+
+#artwork, #title, #artist, #album { display: none; }
+#song-info { justify-content: center; }
+#line { display: block; margin: 0; font-size: 20px; }
+#progress { height: 3px; margin-top: 5px; --bar-height: 3px; }

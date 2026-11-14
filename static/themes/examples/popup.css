@@ -1,0 +1,12 @@
+/* Feature: popup styling */
+:root {
+    --popup: 1;
+    --popup-card: none;    /* album, none, or your own custom card */
+    /*--popup-card-time: 2.5; /* seconds the card shows */
+    --popup-show-time: 7;   /* seconds the track stays visible */
+    --fade-time: 0.5s;
+}
+
+/* Popup phases (the script switches data-phase on #overlay) */
+#overlay { transition: opacity var(--fade-time, 0.5s) ease; }
+#overlay[data-phase="hidden"] { opacity: 0; }

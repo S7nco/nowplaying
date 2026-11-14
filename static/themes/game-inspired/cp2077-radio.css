@@ -1,0 +1,84 @@
+@font-face {
+    font-family: 'Silkscreen';
+    src: url('/fonts/Silkscreen/Silkscreen-Regular.ttf') format('truetype');
+    font-display: swap;
+}
+
+:root {
+    --accent: #7df9ff;
+    --font: 'Silkscreen', monospace;
+    --text: #bff8ff;
+    --text-shadow: 0 0 6px rgba(125, 249, 255, 0.7);
+    --panel-bg: #050b0d;
+    --padding: 16px 22px;
+    --border: 2px solid rgba(255, 255, 255, 0.85);
+    --radius: 14px;
+    --artwork-width: 140px;
+    --artwork-height: 140px;
+    --artwork-radius: 4px;
+    --track: repeating-linear-gradient(90deg, rgba(125, 249, 255, 0.2) 0 4px, transparent 4px 6px);
+    --weight: 400;
+    --overlay-width: 720px;
+    --overlay-height: 210px;
+}
+
+
+/*pixel grid over the whole screen */
+#overlay {
+   box-shadow: inset 0 0 18px rgba(125, 249, 255, 0.15);
+   isolation: isolate;
+}
+#overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: 12px;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.45) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.45) 1px, transparent 1px);
+    background-size: 3px 3px;
+}
+
+#label {
+    display: block;
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    opacity: 0.8;
+}
+
+
+#title {
+    font-size: 32px;
+    text-transform: uppercase;
+}
+
+#artist{
+    font-size: 24px;
+}
+
+#album {
+    font-size: 24px;
+}
+
+#progress-bar {
+    background: repeating-linear-gradient(90deg, var(--accent) 0 4px, transparent 4px 6px);
+}
+
+/* Decorative Equalizer */
+#eq {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 96px;   /* 16 segments x 6px, so the cuts lands between segment boundaries */
+    flex-shrink: 0;
+}
+
+#eq span {
+    width: 8px;
+    height: 100%;
+    background: repeating-linear-gradient(to top, var(--accent) 0 4px, transparent 4px 6px);
+    clip-path: inset(calc((1 - var(--level, 0)) * 100%) 0 0 0);
+}

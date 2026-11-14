@@ -1,0 +1,159 @@
+# Now Playing Overlay
+
+A small Windows app that shows what's playing in **Apple Music** or **Spotify** as an overlay for OBS or Twitch streams. It runs in the system tray, 
+serves the overlay as a local web page, and ships with themes, an audio equalizer, a progress bar, and a popup mode.
+
+## Features
+
+- Song title, artist, album, cover art, and a progress bar with optional elapsed / total time
+- Works with the Apple Music app for Windows and the Spotify desktop app, and follow whichever one is playing
+- Live equalizer and music-reactive glows, driven by the player's audio
+- Popup mode: appears when the song changes, then fades out
+- A Theme Gallery to preview every theme, with search, filters, favorites and test backgrounds
+- Themes are plain CSS files. Examples are included, and you can make your own ([how to make a theme](THEMES.md))
+- Runs quietly in the system tray, with a status line showing the current song
+- Written in Rust. Uses a few MB of memory and almost no CPU
+
+## Requirements
+
+- Windows 10 or 11
+- The Apple Music app for Windows, or the Spotify desktop app
+- OBS Studio (or any program that can show a web page)
+
+## Quick Start
+
+1. Download the latest ZIP from the Releases page and unzip it anywhere
+2. Run nowplaying.exe. An icon appears in the system tray.
+3. Start playing something in Apple Music or Spotify.
+4. In OBS, add a Browser source with:
+	- URL: http://localhost:5000/overlay.html
+	- Width: 620, Height: 180
+
+To try another theme, change the address, for example, `http://localhost:5000/overlay.html?theme=eq`. You can also right-click the tray icon and use **Open in Browser** or **Copy URL**.
+Windows may warn you ("Windows protected your PC") because the app is not code-signed. Choose **More info > Run anyway**. The full source code is in this repository.
+
+To start the app with windows, press Win+R, type `shell:startup`, and put a shortcut to `nowplaying.exe` in the folder that opens.
+
+### Spotify
+
+In Spotify, open Settings and turn on **Show desktop overlay when using media keys**. Spotify only tells Windows what it is playing when this is on. Spotify does not share the album name with Windows, so themes show no album line for Spotify songs.
+
+## Theme Gallery
+
+Open `http://localhost:5000/gallery.html` (or choose **Theme Gallery** in the tray menu) to see every theme running.
+
+- Search and filter themes by group
+- Click **Open** to open a theme, or **Copy URL** to paste it into OBS
+- Click the star on a theme to add it to your **Favorites**, which appear at the top of the page
+- Use the colored dots to preview themes on a dark, black, white, green, or checkered background (useful for transparent themes)
+- Use **Playing / Paused** to freeze the previews
+
+Your favorites also appear in the tray menu, under **Open in Browser** and **Copy URL**. They are saved in `favorites.json` next to the app. Until you star something, the tray uses the `tray_themes` list from `config.toml`
+
+## The tray menu
+
+Right-click the tray icon:
+
+| Item | What it does |
+|---|---|
+| Status line | Shows the current song and whether it is playing or paused. Reads "No Song Detected" when a player is open but idle, and "Not running" when none is open |
+| Theme Gallery | Opens the Theme Gallery in your browser |
+| Open in Browser | Opens the overlay in a theme of your choice |
+| Copy URL | Copies the overlay address for a theme |
+| Restart | Restarts the app, so new theme files and `config.toml` changes are picked up. |
+| Quit | Closes the app. |
+
+Hover over the icon to see the current song.
+
+## URL Options
+
+Add these to the overlay address, for example `http://localhost:5000/overlay.html?theme=eq&scale=1.5`. Combine options with `&`.
+
+| Option | What it does | Example |
+|---|---|---|
+| `theme` | Picks a theme from `static/themes/examples`, `static/themes/custom`, `static/themes/game-inspired` or `static/themes/styles` | `?theme=eq` |
+| bg | Page background color, for testing in a browser. A normal browser shows black by default. OBS is always transparent. | `?bg=gray` |
+| Scale | Makes the whole overlay bigger or smaller | `?scale=1.5` | 
+
+### Choosing a scale
+At normal size, the default overlay is 620 x 180 pixels. When you change the scale, set the OBS browser source width and height to match, or the overlay will be cut off or leave empty space.
+
+|Scale | Browser Source Size | Good For |
+|---|---|---|
+| 1 | 620 x 180 | 1080p streams |
+| 1.5 | 930 x 270 | 1440p, or a larger overlay on 1080p | 
+| 2 | 1240 x 360 | 4K |
+
+Some themes use their own size (set with `--overlay-width` and `--overlay-height`). For those, multiply that theme's size by the scale. Using `scale` is sharper than stretching the source in OBS, because the text is redrawn at the new size.
+
+Themes with glows may also add empty space around the overlay (`--offset`). Make the browser source bigger by that amount on each side, or the glow get cut off.
+
+## Themes
+
+Themes are CSS files:
+
+- `static/themes/examples/` holds the example themes. Each one shows off a single feature (equalizer, popup mode, time display, blurred cover background, artwork size, and so on).
+- `static/themes/styles/` holds finished styles.
+- `static/themes/game-inspired/` holds themes inspired by games.
+- `static/themes/custom/` is for your own themes.
+
+If a custom theme has the same name as another one, the custom one is used. Every setting a theme can change, with its default, is listed in [THEMES.md](THEMES.md).
+
+After adding a new theme file, choose **Restart** from the tray menu so it appears in the menu. Editing an existing theme only needs a page refresh (in OBS: right-click the browser source and choose **Refresh the cache of current page**).
+
+## Configuration
+
+Copy `config.example.toml` to `config.toml` (next to `nowplaying.exe`) to change settings. Every setting is optional. The app reads the file when it starts, so restart after editing.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `port` | 5000 | Port the overlay server uses | 
+| `process_name` | `"AmpLibraryAgent.exe, Spotify.exe"` | The players' process names, used to capture audio for the equalizer | 
+| `app_id_match` | `"applemusic, spotify"` | Part of the player's Windows media ID, used to find the right player |
+| `tray_themes` | | Themes shown in the tray menu until you pick favorites in the gallery | 
+| `eq_floor_db`, `eq_ceil_db`, `eq_tilt_db` | | Equalizer sensitivity (see below) |
+
+`process_name` and `app_id_match` take a comma-separated list, matched by position: the first entry in each belongs to the first player, the second to the second player, and so on. The overlay follows the player that is playing.
+
+## Tuning the equalizer
+
+Different music and volume settings can make the bars look too full or too flat. Adjust these in 'config.toml', then restart the app. They depend on the volume inside the player app, not the windows volume. 
+
+| What you see | What to change |
+|---|---|
+| Bars always at the top or bouncing at the max | Raise 'eq_ceil_db' (less negative, e.g. '-27' to '-22') |
+| Bars barely moving | Lower 'eq_ceil_db' (more negative) or lower 'eq_floor_db' |
+| Bars stay up when the music is quiet | Raise 'eq_floor_db' (less negative) | 
+| Right-hand bars too weak compared to the left | Raise 'eq_tilt_db' |
+| Left-hand bars too weak compared to the right | Lower 'eq_tilt_db' |
+
+Change one value at a time, by about 5 for the floor and ceiling and by about 0.5 for the tilt.
+
+## Troubleshooting
+- **The overlay is blank.** Check that a player is playing, and look at the tray status line to see what the app detects.
+- **Spotify isn't detected.** In Spotify, turn on **Show desktop overlay when using media keys**, then restart Spotify. Make sure it's the desktop app, since the web player in a browser shows up under the browser's name.
+- **The equalizer doesn't move.** Check that `process_name` in `config.toml` matches the players' process name in Task Manager (Details tab). Restart the app after the player updates.
+- **The port is already in use.** Another program is using port 5000. Change the `port` in `config.toml`.
+- **A new theme isn't showing.** Choose **Restart** from the tray menu. Also make sure Windows isn't hiding the extension and naming the file `mytheme.css.txt`.
+- **Something else is wrong.** Look at `nowplaying.log` next to the exe.
+
+## Network Note
+
+The overlay server listens on all network interfaces, so you can open the overlay from another computer on your network, for example a second streaming PC. If you don't need that, make sure Windows Firewall only allows the app on private networks. The app does not send any data to the internet.
+
+## Building from Source
+
+You need [Rust](https://rustup.rs). Then:
+
+```
+
+cargo build --release
+```
+
+The program is created at `target\release\nowplaying.exe`. It needs the `static` folder and `icon.ico`, and finds them in the project folder.
+
+## Credit and License
+
+Fonts included in `static/fonts` are licensed under the SIL Open Font License. Each font's license is in its own folder.
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE). 

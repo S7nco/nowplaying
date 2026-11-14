@@ -1,0 +1,17 @@
+/* Feature: vertical card, artwork on top */
+:root {
+    --overlay-width: 300px;
+    --overlay-height: auto;
+    --panel-bg: rgba(10, 10, 10, 0.85);
+    --padding: 16px;
+    --radius: 14px;
+    --artwork-width: 100%;
+    --artwork-height: auto;
+    --artwork-radius: 10px;
+}
+
+#overlay { flex-direction: column; align-items: stretch; }
+#artwork { aspect-ratio: 1 / 1; }
+#song-info { flex: none; }
+#title { --title-size: 26px; }
+#artist, #album { --text-size: 18px; }

@@ -1,0 +1,142 @@
+@font-face {
+    font-family: 'Rajdhani';
+    src: url('/fonts/Rajdhani/Rajdhani-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-display: swap;
+}
+
+:root {
+    --popup: 1;                 /* 1 = pop up on each new song, anything else = always visible */
+    --popup-card: album;        /* album | none | "fixed text" */
+    --popup-card-time: 2.5s;    /* how long the first card shows */
+    --popup-show-time: 7s;      /* how long the song card shows */
+
+    --accent: #ff4b4b;
+    --eq-color: #4fd8e8;
+    --font: 'Rajdhani', sans-serif;
+    --text: #ff4b4b;
+    --text-shadow: 0 0 5px rgba(255, 75, 75, 0.4), 0 1px 2px rgba(0, 0, 0, 0.9);
+    --panel-bg: linear-gradient(90deg, rgba( 14, 52, 48, 0.50), rgba( 14, 52, 48, 0.36) );
+    --overlay-height: 64px;
+    --padding: 0 20px;
+    --border: none;
+    --radius: 0;
+}
+
+#artwork, #album, #progress { display: none; }
+
+#song-info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4em;
+}
+
+/* one-line layout: title - artist */
+#title, #artist { display: none; }
+
+#line {
+    display: block;
+    flex: 1 1 0;                    /* fixed share of the strip, whatever the text is */
+    min-width: 0;
+    font-size: 24px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 6px 0;                 /* room so the glow isn't clipped */
+    margin: -6px 0;
+}
+
+/* scanlines across the glass */
+#overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;    /* behind the text, above the glass */
+    pointer-events: none;
+    filter: blur(1px);
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(120, 200, 180, 0.06) 0px,  /* Light band color + strength */
+        rgba(120, 200, 180, 0.06) 3px,  /* Light band thickness */
+        rgba(0, 20, 18, 0.12) 3px,      /* Dark band color + strength */
+        rgba(0, 20, 18, 0.12) 6px      /* total height of one light+dark pair */
+    ); 
+}
+
+/* corner ticks */
+#overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    --c: linear-gradient(var(--accent), var(--accent));
+    background:
+        var(--c) top left / 12px 2px no-repeat,
+        var(--c) top left / 2px 12px no-repeat,
+        var(--c) top right / 12px 2px no-repeat,
+        var(--c) top right / 2px 12px no-repeat,
+        var(--c) bottom left / 12px 2px no-repeat,
+        var(--c) bottom left / 2px 12px no-repeat,
+        var(--c) bottom right / 12px 2px no-repeat,
+        var(--c) bottom right / 2px 12px no-repeat;
+}
+
+#eq {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 22px;
+    margin-left: 14px;
+    flex-shrink: 0;
+}
+#eq span {
+    width: 4px;
+    height: 100%;
+    background: var(--eq-color);
+    clip-path: inset(calc((1 - max(var(--level, 0), 0.15)) * 100%) 0 0 0);  /* never fully empty */
+}
+#eq span:nth-child(2),
+#eq span:nth-child(5),
+#eq span:nth-child(7) { display: none; }
+
+/* popup phases */
+#overlay { 
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    backdrop-filter: blur(5px) saturate(1.2);
+    box-shadow: inset 0 0 0 1px rgba(79, 216, 232, 0.12);
+    isolation: isolate;
+}
+
+#overlay[data-phase="hidden"] {
+    opacity: 0;
+    transform: translateY(-24px);
+}
+
+#station {
+    display: block;
+    position: absolute;
+    inset: 0;
+    padding: 0 24px;
+    line-height: var(--overlay-height);
+    text-align: center;
+    font-size: 22px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transition: opacity 0.25s ease 0s; 
+}
+
+/* Song text waits for the card to leave before fading in */
+#overlay > :not(#station) { transition: opacity 0.25s ease 0.25s; }
+
+/* station phase: song text leaves first, then the card fades in) */
+#overlay[data-phase="station"] > #station { opacity: 1; transition-delay: 0.25s; }
+#overlay[data-phase="station"] > :not(#station) { opacity: 0; transition-delay: 0s; }
+
+/* hidden phase: song text stays until the box has faded out */
+#overlay[data-phase="hidden"] > :not(#station) { opacity: 0; transition-delay: 0.4s; }

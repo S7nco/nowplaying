@@ -1,0 +1,298 @@
+/* Feature: Casette theme */
+:root {
+    --w: 440px;             /* cassette width */
+    --h: 290px;             /* cassette height */
+
+    --stripe: #e4572e;    /* color band across the top of the label */
+    --ink: #1f2f6b;       /* ballpoint pen color for the text */
+    --paper: #f1e9d2;     /* label paper */
+    --tape: #5a4130;      /* tape (brown) */
+
+    --font: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+
+    --overlay-width: var(--w);
+    --overlay-height: var(--h);
+    --panel-bg: linear-gradient(180deg, #46464d 0%, #2a2a30 100%);
+    --padding: 0;
+    --radius: 16px;
+    --border: 2px solid #0d0d10;
+
+    --text: var(--ink);
+    --text-shadow: none;
+    --weight: 400;
+    --title-color: var(--ink);
+    --title-size: 22px;
+    --artist-size: 16px;
+    --album-size: 14px;
+    --secondary-opacity: 0.85;
+
+    --accent: var(--ink);
+    --bar-height: 3px;
+    --bar-color: var(--ink);
+    --track: rgba(31, 47, 107, 0.2);
+
+    --marquee-speed: 30;
+    --marquee-pause: 2;
+}
+
+@keyframes reel { to { transform: rotate(360deg); } }
+
+/* ----------- body of the casette ----------- */
+#overlay {
+    display: block;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+    background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.02) 0 2px, transparent 2px 4px), var(--panel-bg);
+}
+
+/* ----------- label (paper strip with the text on it) ----------- */
+#song-info {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 16px;
+    height: 134px;
+    box-sizing: border-box;
+    padding: 30px 128px 8px 16px;       /* right padding leaves room for the cover */
+    justify-content: center;
+    overflow: hidden;
+    background: var(--paper);
+    border-radius: 6px;
+}
+
+/* colored band across the top of the label */
+#song-info::before {
+    content: "";
+    position: absolute; 
+    left: 0; right: 0; top: 0;
+    height: 22px;
+    background: var(--stripe);
+}
+
+#label {
+    display: block;
+    position: absolute;
+    left: 16px;
+    top: 4px;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: #fff;
+}
+
+#progress { margin-top: 8px; }
+
+/* ----------- cover, stuck on like a sticker ----------- */
+#artwork {
+    position: absolute;
+    right: 32px;
+    top: 30px;
+    z-index: 3;
+    --artwork-width: 92px;
+    --artwork-height: 92px;
+    --artwork-radius: 2px;
+    --artwork-border: 5px solid #fff;
+    --artwork-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    transform: rotate(3deg);
+}
+
+/* ----------- tape window ----------- */
+#overlay::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 46px;
+    width: 300px;
+    height: 84px;
+    margin-left: -150px;
+    box-sizing: border-box;
+    border: 2px solid #0d0d10;
+    border-radius: 10px;
+    background: rgba(8, 8, 10, 0.75);
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
+}
+
+/* glare across the window glass */
+#overlay::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 46px;
+    width: 300px;
+    height: 84px;
+    margin-left: -150px;
+    border-radius: 10px;
+    background: linear-gradient(115deg, rgba(255, 255, 255, 0.14) 0 28%, transparent 28%);
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* ----------- reels: tape on a spinning hub ----------- */
+/* the element is the tape (brown disc), and its size follow --progress */
+#extra-1, #extra-2 {
+    display: block;
+    position: absolute;
+    top: 202px;             /* vertical center of the window */
+    z-index: 1;
+    border-radius: 50%;
+    background: 
+        repeating-radial-gradient(circle, rgba(0, 0, 0, 0.2) 0 1px, transparent 1px 3px),
+        radial-gradient(circle, #7a5a44, var(--tape));
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4), 0 0 5px rgba(0, 0, 0, 0.5);
+    transition: width 0.3s linear, height 0.3s linear, margin 0.3s linear;
+}
+
+/* left reel starts full and empties, right reel starts empty and fills */
+#extra-1 {
+    --d: calc(38px + (1 - var(--progress, 0)) * 36px);
+    left: calc(50% - 90px);
+    width: var(--d);
+    height: var(--d);
+    margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
+}
+#extra-2 {
+    --d: calc(38px + var(--progress, 0) * 36px);
+    left: calc(50% + 90px);
+    width: var(--d);
+    height: var(--d);
+    margin: calc(var(--d) / -2) 0 0 calc(var(--d) / -2);
+}
+
+/* hub: white disc with a dark center */
+#extra-1::before, #extra-2::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 34px; height: 34px;
+    margin: -17px 0 0 -17px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #141414 0 11px, #ececec 11.5px);
+    animation: reel 2.4s linear infinite;
+}
+
+/* the six teeth inside the hub */
+#extra-1::after, #extra-2::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 22px; height: 22px;
+    margin: -11px 0 0 -11px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(#ececec 0 14deg, transparent 14deg 60deg);
+    -webkit-mask: radial-gradient(circle, transparent 0 6px, #000 6.5px);
+    mask: radial-gradient(circle, transparent 0 6px, #000 6.5px);
+    animation: reel 2.4s linear infinite;
+}
+
+/* reels stop when the music is paused */
+#overlay[data-playing="0"] #extra-1::before, #overlay[data-playing="0"] #extra-1::after,
+#overlay[data-playing="0"] #extra-2::before, #overlay[data-playing="0"] #extra-2::after {
+    animation-play-state: paused;
+}
+
+/* ---------- bottom plate ---------- */
+#extra-3 {
+    display: block;
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 250px;
+    height: 34px;
+    margin-left: -125px;
+    background: linear-gradient(#58585f, #3b3b42);
+    clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+}
+#extra-3::before, #extra-3::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #0d0d10;
+    box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+#extra-3::before { left: 20%; }
+#extra-3::after { right: 20%; }
+
+/* ---------- corner screws (one element, copied with box-shadow) ---------- */
+#extra-4 {
+    display: block;
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #8a8a92;
+    box-shadow:
+        calc(var(--w) - 23px) 0 0 0 #8a8a92,
+        0 calc(var(--h) - 23px) 0 0 #8a8a92,
+        calc(var(--w) - 23px) calc(var(--h) - 23px) 0 0 #8a8a92;
+}
+
+/* ====================================
+    Realism extras
+==================================== */
+/* window: tape guide rollers in the bottom corners */
+#overlay::before {
+    background:
+        radial-gradient(circle 6px at 34.8% 82.5%, #9a9aa2 0 2.5px, #3a3a40 3px 4.5px, transparent 5px),
+        radial-gradient(circle 6px at 65.2% 82.5%, #9a9aa2 0 2.5px, #3a3a40 3px 4.5px, transparent 5px),
+        rgba(8, 8, 10, 0.75);
+}
+
+/* plastic edge: a light top edge and a darker bottom edge */
+#overlay {
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.55),
+        inset 0 2px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -3px 0 rgba(0, 0, 0, 0.35);    
+}
+
+/* window glass: glare plus a few faint scratches */
+#overlay::after {
+    background:
+        linear-gradient(115deg, rgba(255, 255, 255, 0.14) 0 28%, transparent 28%),
+        linear-gradient(104deg, transparent 52%, rgba(255, 255, 255, 0.10) 52.3%, transparent 52.8%),
+        linear-gradient(98deg, transparent 71%, rgba(255, 255, 255, 0.08) 71.2%, transparent 71.6%),
+        linear-gradient(112deg, transparent 38%, rgba(255, 255, 255, 0.06) 38.2%, transparent 38.5%);
+}
+
+/* ruled lines on the label paper */
+#song-info {
+    background:
+    repeating-linear-gradient(transparent 0 22px, rgba(31, 47, 107, 0.13) 22px 23px),
+    var(--paper);
+/* label: sits slightly into the shell */
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* "SIDE A" and tape length printed in the corner of the label */
+#song-info::after {
+    content: "SIDE A  ·  C-90";
+    position: absolute;
+    right: 12px;
+    bottom: 6px;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: rgba(31, 47, 107, 0.5);
+}
+
+/* bottom plate; head opening in the middle */
+#extra-3 {
+    background:
+        linear-gradient(#17171a, #17171a) center 8px / 40px 14px no-repeat,
+        linear-gradient(#58585f, #3b3b42);
+}
+
+/* write-protect notches on the top edge */
+#extra-4::before, #extra-4::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    width: 16px;
+    height: 7px;
+    background: #0d0d10;
+    border-radius: 0 0 2px 2px;
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+}
+#extra-4::before { left: 40px; }
+#extra-4::after { left: calc(var(--w) - 82px); }

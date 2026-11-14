@@ -1,0 +1,147 @@
+/* ============================================================
+   Now Playing overlay: base styles
+   This file is the layout. Themes change the look by overriding
+   the CSS variables below (see themes/examples/default.css).
+   Every variable has a fallback, so this works with no theme.
+   Variables:
+    Text:           --font, --text, --text-shadow, --text-size, --text-align,
+                    --weight, --secondary-opacity
+    Title:          --title-color, --title-size, --title-transform, --title-spacing
+                    scrolling: --marquee-speed (px per second, default 40), --marquee-pause (seconds, default 2);
+    Artist/Album:   --artist-size, --album-size
+    Panel:          --overlay-width, --overlay-height, --panel-bg, --padding,
+                    --gap, --border, --radius, --clip
+    Artwork:        --artwork-width, --artwork-height, --artwork-radius, 
+                    --artwork-shadow, --artwork-border
+    Progress bar:   --accent, --bar-color, --track, --bar-height, --bar-radius
+    Time:           --time-size, --time-color
+    Popup mode:     --popup, --popup-card, --popup-card-time, --popup-show-time
+                    (read by script.js)
+    
+    Set by script.js (don't set these in a theme)
+                    --cover, --level
+============================================================ */
+
+/* ---------- Page ---------- */
+body {
+    margin: 0;
+    padding: var(--offset, 0px);        /* empty space around the overlay, so glows and related variables are not clipped */
+    overflow: hidden;
+    background: transparent;
+    font-family: var(--font, sans-serif);
+    color: var(--text, white);
+    text-shadow: var(--text-shadow, 1px 1px 3px black);
+}
+
+/* ---------- Overlay ---------- */
+
+#overlay {
+    position: relative;             /* so themes can add ::before / ::after effects */
+    display: flex;
+    align-items: center;
+    gap: var(--gap, 12px);
+    height: var(--overlay-height, 180px);
+    width: var(--overlay-width, 620px);
+    box-sizing: border-box;         /* padding and border count inside the size */
+    padding: var(--padding, 12px);
+    background: var(--panel-bg, rgba(10,10,10, 0.85));
+    border: var(--border, none);
+    clip-path: var(--clip, none);
+    border-radius: var(--radius, 0);
+}
+
+/* stay invisible until the script has chosen a phase */
+#overlay:not([data-phase]) { opacity: 0; }
+#overlay:not([data-phase]) > * { opacity: 0; }
+
+/* ---------- Artwork ---------- */
+
+#artwork {
+    width: var(--artwork-width, 160px);
+    height: var(--artwork-height, 160px);
+    object-fit: cover;
+    border-radius: var(--artwork-radius, 8px);
+    flex-shrink: 0;
+    box-sizing: border-box;     /* a border stays inside the cover size */
+    box-shadow: var(--artwork-shadow, none);
+    border: var(--artwork-border, none);
+}
+
+#artwork[hidden] {display: none;}
+
+/* ---------- Text Column ---------- */
+#song-info {
+    flex: 1;
+    min-width: 0;       /* Lets the text column shrink, which the marquee needs to detect overflow */
+    display: flex;
+    flex-direction: column;
+    text-align: var(--text-align, left);
+}
+
+/* order of items in the text column (themes can slot things in between) */
+#label      { order: 10; }
+#title      { order: 20; }
+#artist     { order: 30; }
+#album      { order: 40; }
+#line       { order: 50; }
+#progress   { order: 60; }
+#time       { order: 70;}
+
+/* ---------- Title ---------- */
+#title {
+    font-size: var(--title-size, 32px);
+    font-weight: var(--weight, 700);
+    margin: 0;
+    color: var(--title-color, var(--accent, white));
+    text-transform: var(--title-transform, none);
+    letter-spacing: var(--title-spacing, normal);
+}
+
+/* ---------- Artist and Album ---------- */
+#artist, #album {
+    font-weight: var(--weight, 700);
+    margin: 0;
+    opacity: var(--secondary-opacity, 0.85);
+}
+
+#artist { font-size: var(--artist-size, var(--text-size, 20px)); }
+#album { font-size: var(--album-size, var(--text-size, 20px)); }
+
+/* ---------- Progress Bar ---------- */
+
+#progress {
+    width: 100%;
+    height: var(--bar-height, 8px);
+    background: var(--track, rgba(255, 255, 255, 0.3));
+    border-radius: var(--bar-radius, 0);
+    overflow: hidden;           /* also clips the fill to the rounded corners */
+    margin-top: 6px;
+}
+
+#progress-bar {
+    width: 0%;
+    height: 100%;
+    background: var(--bar-color, var(--accent, white));
+    transition: width 0.2s linear;
+}
+
+/* ---------- Time ---------- */
+#time {
+    font-size: var(--time-size, 18px);
+    color: var(--time-color, var(--text, white));
+}
+
+/* ---------- Optional parts (hidden until a theme turns them on) ---------- */
+#eq, #label, #station, #line, #time, .extra {
+    display: none;
+}
+
+/* ---------- Scrolling Text (Marquee) ---------- */
+
+.marquee {
+    overflow: hidden;
+    white-space: nowrap;
+}
+.marquee > span {
+    display: inline-block;
+}

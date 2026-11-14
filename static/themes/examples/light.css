@@ -1,0 +1,11 @@
+/* Feature: light panel with dark text */
+:root {
+    --text: #1a1a1a;
+    --text-shadow: none;
+    --accent: #c2255c;      /* title color and progress bar fill */
+    --panel-bg: rgba(255, 255, 255, 0.9);
+    --padding: 12px;
+    --radius: 12px;
+    --track: rgba(0, 0, 0, 0.15);
+    --bar-radius: 3px;
+}

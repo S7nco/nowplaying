@@ -1,0 +1,118 @@
+/* Destiny Card Theme */
+@font-face {
+    font-family:'Rajdhani';
+    src: url('/fonts/Rajdhani/Rajdhani-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-display: swap;
+}
+
+:root {
+    --rarity: #ceae33;
+    --rarity-text: #11141b;
+    --accent: var(--rarity);
+
+    --font: 'Rajdhani', sans-serif;
+    --overlay-width: 480px;
+    --overlay-height: 170px;
+    --panel-bg: linear-gradient(180deg, rgba(26, 29, 38, 0.95), rgba(12, 14, 20, 0.95));
+    --padding: 0;
+    --radius: 0;
+    --border: 1px solid rgba(255, 255, 255, 0.22);
+    --clip: polygon(0 0, 100% 0, calc(100% - 14px), calc(100% - 14px), 0 100%);
+
+    --text: #e8eaf0;
+    --text-shadow: none;
+    --weight: 700;
+    --title-size: 21px;
+    --title-color: var(--rarity-text);
+    --title-transform: uppercase;
+    --title-spacing: 2px;
+    --artist-size: 15px;
+    --album-size: 14px;
+    --secondar-opacity: 1;
+
+    --artwork-width: 96px;
+    --artwork-height: 96px;
+    --artwork-radius: 0;
+    --artwork-border: 1px solid rgba(255, 255, 255, 0.4);
+
+    --marquee-speed: 40;
+    --marquee-pause: 2;
+}
+
+#overlay { display: block; }
+
+/* rarity bar across the top */
+#overlay::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 31px;
+    background: var(--rarity);
+}
+
+/* shimmer across the bar when the song changes */
+#overlay::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 31px;
+    pointer-events: none;
+    background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.6) 50%,
+         transparent 65%) -150% 0 / 60% 100% no-repeat;
+}
+#overlay[data-skip]::after { animation: shimmer 0.45s ease-out; }
+@keyframes shimmer {
+    from { background-position: -150% 0; }
+    to { background-position: 250% 0; }
+}
+
+/* the cover is the item icon */
+#artwork {
+    position: absolute;
+    left: 16px;
+    top: 47px;
+    z-index: 1;
+}
+
+#song-info {
+    position: absolute;
+    inset: 0;
+    padding: 0 16px;
+    justify-content: flex-start;
+    gap: 0;
+}
+
+#title { line-height: 31px; margin: 0; }
+
+/* everything under the title sits beside the cover */
+#artist, #album, #progress { margin-left: 112px; width: calc(100% - 112px); }
+
+#artist {
+    margin-top: 12px;
+    font-size: var(--artist-size);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: #aeb6c6;
+}
+
+#album {
+    font-style: italic;
+    font-weight: 600;
+    color: #d5d9e4;
+}
+
+/* Segmented objective bar */
+#progress {
+    margin-top: auto;
+    margin-bottom: 18px;
+    height: 4px;
+    background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.14) 0 8px 10px);
+    border-radius: 0;
+}
+#progress-bar {
+    background: repeating-linear-gradient(90deg, var(--rarity) 0 8px, transparent 8px 10px);
+}
+
+/* paused: the bar loses its color */
+#overlay[data-playing="0"]::before { filter: saturate(0.25) brightness(0.8); }

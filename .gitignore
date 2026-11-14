@@ -1,0 +1,20 @@
+# Rust build output (large, and rebuilt by anyone who clones the project)
+/target
+/dist
+
+# Generated while the app runs
+/static/cover.jpg
+/nowplaying.log
+/favorites.json
+
+# My Personal settings (config.example.toml is the shared template)
+/config.toml
+
+# My Custom overlays, but keep folder
+/static/themes/custom/*
+!/static/themes/custom/README.txt
+
+# Editor and OS files
+/.vscode
+Thumbs.db
+desktop.ini

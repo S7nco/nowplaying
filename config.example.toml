@@ -1,0 +1,32 @@
+# Now Playing Overlay settings
+# The app reads this file when it starts, so restart after editing.
+# Any line you delete (or any line starting with #) falls back to the default shown here.
+# Use "Copy this file to config.toml" only if you got it as config.example.toml
+
+# Port the overlay server runs on. If you change it, change the address in OBS too.
+port = 5000
+
+# Players, matched by position. The first entry in each list belongs to the first player
+# (Apple Music), the second to the second (Spotify), and so on. Add more with commas.
+
+# process_name: the player's process, used to capture audio for the equalizer.
+#   (Task Manager > Details tab shows the names.)
+process_name = "AmpLibraryAgent.exe, spotify.exe"
+
+# app_id_match: part of the player's Windows media ID, used to find its song info.
+app_id_match = "applemusic, spotify"
+
+# Themes shown in the tray menu (Open in Browser / Copy URL) until you pick favorites
+# with the star in the Theme Gallery. After that, your favorites are used instead.
+# tray_themes = ["default", "eq", "popup"]
+
+# Equalizer tuning: a bar is full at eq_ceil_db and empty at eq_floor_db
+# Bars barely moving: make both more negative.
+# Bars maxed out or bouncing at the top: make eq_ceil_db less negative
+# Bars sitting up when the music is quiet: make eq_floor_db less negative.
+eq_floor_db = -73.0
+eq_ceil_db = -27.0
+
+# Highs carry less energy than bass, so lift each band a little more than the last
+# Right hand bars too weak compared to left: increase this value
+eq_tilt_db = 3.00

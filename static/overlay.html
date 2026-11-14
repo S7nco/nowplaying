@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Now Playing Overlay</title>
+
+    <!-- Base styles, then the theme on top -->
+    <link rel="stylesheet" href="style.css">
+    <link id="theme-link" rel="stylesheet">
+
+    <!-- No tab icon needed in OBS; this stops the browser asking for one 
+    <link rel="icon" href="data:,"-->
+</head>
+<body>
+    <div id="overlay">
+        <img id="artwork" alt="" hidden>
+
+        <div id="song-info">
+            <div id="label">NOW PLAYING</div>
+            <h1 id="title" class="marquee"><span>Title</span></h1>
+            <p id="artist" class="marquee"><span>Artist</span></p>
+            <p id="album" class="marquee"><span>Album</span></p>
+            <h2 id="line" class="marquee"><span></span></h2>
+
+            <div id="progress">
+                <div id="progress-bar"></div>
+            </div>
+            <div id="time">
+                <span id="time-elapsed">0:00</span>
+                <span id="time-total">0:00</span>
+            </div>
+        </div>
+        
+        <!-- Equalizer: 8 bars to match the 8 bands the server sends -->
+        <div id="eq">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <!-- Popup album card (used by popup themes) -->
+        <div id="station"></div> 
+
+        <!-- Spare elements for themes to draw with (hidden unless a theme turns them on) -->
+         <div class="extra" id="extra-1"></div>
+         <div class="extra" id="extra-2"></div>
+         <div class="extra" id="extra-3"></div>
+         <div class="extra" id="extra-4"></div>
+         <div class="extra" id="extra-5"></div>
+         <div class="extra" id="extra-6"></div>
+         <div class="extra" id="extra-7"></div>
+         <div class="extra" id="extra-8"></div>
+    </div>
+
+    <script src="script.js">
+    </script>
+</body>
+</html>

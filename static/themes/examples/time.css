@@ -1,0 +1,8 @@
+#time { 
+    display: flex; 
+    justify-content: space-between; /* space between the time elements */
+    font-size: 18px;
+    margin-top: 4px;
+    opacity: 0.75; 
+    order: 51;  /* ensure that time appears above the progess bar */
+}

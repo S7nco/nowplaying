@@ -1,0 +1,11 @@
+/* Feature: artwork size */
+:root {
+    --artwork-size: 220px;
+    --artwork-height: 220px;
+    --overlay-height: 240px;
+}
+
+/* if want no artwork
+#artwork { display: none; }*/
+
+/* End of artwork size feature */

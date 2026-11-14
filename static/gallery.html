@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Now Playing: Theme Gallery</title>
+    <link rel="stylesheet" href="gallery.css">
+</head>
+<body>
+    <h1>Theme Gallery</h1>
+    <p class="sub">Pick a theme, then copy its link into a OBS browser source. Previews show your current song.</p>
+
+    <div class="bar">
+        <input id="search" type="search" placeholder="Search themes">
+        <button class="chip on" data-filter="all">All</button>
+        <button class="chip" data-filter="examples">Examples</button>
+        <button class="chip" data-filter="styles">Styles</button>
+        <button class="chip" data-filter="game-inspired">Game Inspired</button>
+        <button class="chip" data-filter="custom">Custom</button>
+        <button class="chip" data-filter="favorites">★ Favorites</button>
+        <button id="playToggle" class="chip">Playing</button>
+        <span class="swatches" title="Preview Background">
+            <button class="sw" data-bg="dark" title="Dark"></button>
+            <button class="sw" data-bg="black" title="Black"></button>
+            <button class="sw" data-bg="white" title="White"></button>
+            <button class="sw" data-bg="green" title="Green"></button>
+            <button class="sw" data-bg="checker" title="Checker"></button>
+        </span>
+    </div>
+    <div class="count" id="count"></div>
+    <div id="favorites"></div>
+    <div id="sections"></div>
+    
+    <script src="gallery.js"></script>
+</body>
+</html>
