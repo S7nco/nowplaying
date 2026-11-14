@@ -29,12 +29,8 @@ Remove-Item "$folder\static\cover.jpg" -ErrorAction SilentlyContinue
 # Ship an empty custom folder (just the README), not my own themes
 Get-ChildItem "$folder\static\themes\custom" -Exclude "README.txt" | Remove-Item -Recurse -Force
 
-# config: prefer an example file if you have one, otherwise your own
-if (Test-Path "config.example.toml") {
-    Copy-Item "config.example.toml" "$folder\config.toml"
-} elseif (Test-Path "config.toml") {
-    Copy-Item "config.toml" "$folder\config.toml"
-}
+# Ship the template only, so unzipping an update never overwrites someone's config.toml
+Copy-Item "config.example.toml" $folder
 
 foreach ($file in "README.md", "THEMES.md", "LICENSE") {
     if (Test-Path $file) { Copy-Item $file $folder }
