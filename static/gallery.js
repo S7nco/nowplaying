@@ -34,15 +34,16 @@ async function loadFavorites() {
     try { 
         const res = await fetch("/favorites", { cache: "no-store" });
         const server = await res.json();
+        const serverSet = new Set(server);
         server.forEach((n) => favorites.add(n));
         // one time: merge stars you set before this feature existed
         if (!localStorage.getItem(MIGRATED_KEY)) {
-            const before = favorites.size;
             const local = JSON.parse(localStorage.getItem(FAV_KEY) || "[]");
             local.forEach((n) => favorites.add(n));
             localStorage.setItem(MIGRATED_KEY, "1");
-            if (favorites.size !== before) saveFavorites();
         }
+        // the browser knows stars the server doesn't (e.g. fresh unzip): sync them
+        if ([...favorites].some((n) => !serverSet.has(n))) saveFavorites();
     } catch {}
 }
 

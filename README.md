@@ -43,6 +43,12 @@ Windows may warn you ("Windows protected your PC") because the app is not code-s
 
 To start the app with Windows, press Win+R, type `shell:startup`, and put a shortcut to `nowplaying.exe` in the folder that opens.
 
+### Updating
+
+Quit the app from the tray, then unzip the new release to the same place as before, so its `NowPlaying` folder lands on top of your old one. Choose **Replace** when Windows asks. Your `config.toml`, `favorites.json` and custom themes are not in the zip, so they stay as they are.
+
+If you unzip into a new folder instead, copy `config.toml`, `favorites.json` and `static\themes\custom` over from the old one. If you forget `favorites.json`, open the Theme Gallery once and it copies the stars saved in your browser back into the app.
+
 ### Spotify
 
 In Spotify, open Settings and turn on **Show desktop overlay when using media keys**. Spotify only tells Windows what it is playing when this is on. Spotify does not share the album name with Windows, so themes show no album line for Spotify songs.
