@@ -15,7 +15,7 @@ jobs:
   release:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check tag matches Cargo.toml version
         shell: pwsh
@@ -36,7 +36,7 @@ jobs:
         run: Rename-Item dist/NowPlaying.zip "NowPlaying-${{ github.ref_name }}.zip"
 
       - name: Publish the release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/NowPlaying-${{ github.ref_name }}.zip
           generate_release_notes: true
