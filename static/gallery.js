@@ -105,10 +105,7 @@ function toggleFavorite(name) {
 
 function applyPlaying(frame) {
     try {
-        frame.contentWindow.__previewPaused = !playing;
-        const ov = frame.contentDocument.getElementById("overlay");
-        const want = playing ? "1" : "0";
-        if (ov && ov.dataset.playing !== want) ov.dataset.playing = want;
+        frame.contentWindow.setPreviewPaused?.(!playing);
     } catch (e) {}
 }
 
@@ -139,7 +136,7 @@ function pump() {
 function loadView(view) {
     if (view.querySelector("iframe")) return;
     const frame = document.createElement("iframe");
-    frame.src = `overlay.html?theme=${encodeURIComponent(view.dataset.theme)}&bg=transparent`;
+    frame.src = `overlay.html?theme=${encodeURIComponent(view.dataset.theme)}&bg=transparent&preview=1`;
     frame.setAttribute("tabindex", "-1");
     view.appendChild(frame);
     view.querySelector(".ph")?.remove();
@@ -192,18 +189,7 @@ function whenReady (frame, view) {
         if (!frame.isConnected) { clearInterval(timer); return; }
         if (overlay && overlay.dataset.phase) {
             clearInterval(timer);
-            // popup themes are hidden until a song change, so show them
-            const enforce = () => {
-                if (overlay.dataset.phase !== "track") overlay.dataset.phase = "track";
-                applyPlaying(frame);
-            };
-            const hold = setInterval(() => {
-                if (!frame.isConnected) { clearInterval(hold); return; }
-                enforce();
-            }, 500);
-            new MutationObserver(enforce)
-                .observe(overlay, { attributes: true, attributeFilter: ["data-phase", "data-playing"] });
-            enforce();
+            applyPlaying(frame);
             layout(view);
             setTimeout(() => layout(view), 700);    // again once fonts and text have settled
             setTimeout(() => layout(view), 2000);

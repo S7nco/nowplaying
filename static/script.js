@@ -22,6 +22,9 @@ const theme = (params.get("theme") || "default").replace(/[^a-z0-9_-]/gi, "");
 // Folders searched for the theme file, in order (custom themes win over examples)
 const themeFolders = ["themes/custom/", "themes/styles/", "themes/game-inspired/", "themes/examples/"]; // looked up in this order
 
+// Gallery preview (?preview=1): popup themes stay visible, and the gallery controls play/pause
+const PREVIEW = params.get("preview") === "1";
+
 // How often things update, in milliseconds
 const NOWPLAYING_POLL_MS = 5000;
 const PROGRESS_TICK_MS = 200;
@@ -76,6 +79,18 @@ let energy = 0;
 
 // Pending popup timers
 let popupTimers = [];
+
+// "1" or "0" for data-playing: in a gallery preview the Play/Pause button decides, otherwise the player does
+function playingAttr() {
+    if (PREVIEW) return window.__previewPaused ? "0" : "1";
+    return isPlaying ? "1" : "0";
+}
+
+// The gallery's Play/Pause button calls this
+window.setPreviewPaused = (paused) => {
+    window.__previewPaused = paused;
+    overlayEl.dataset.playing = playingAttr();
+};
 
 // ============================================================
 // Theme Loading
@@ -163,7 +178,7 @@ function syncProgress(data) {
         lastKnownDuration = 0;
         lastTrack = null;
         isPlaying = false;
-        overlayEl.dataset.playing = "0";
+        overlayEl.dataset.playing = playingAttr();
         progressEl.style.width = "0%";
         return;
     }
@@ -181,13 +196,13 @@ function syncProgress(data) {
     lastKnownDuration = data.duration;
     lastTrack = trackKey;
     isPlaying = data.playing;
-    overlayEl.dataset.playing = isPlaying ? "1" : "0";
+    overlayEl.dataset.playing = playingAttr();
 
     if (trackChanged) {
         overlayEl.dataset.skip = "1";
         setTimeout(() => delete overlayEl.dataset.skip, 450);
     }
-    if (trackChanged && popupConfig().enabled) {
+    if (trackChanged && popupConfig().enabled && !PREVIEW) {
         showPopup(cardTextFor(cleanAlbum(data.album), data.title, data.album));
     }
 }
@@ -429,7 +444,7 @@ function showPopup(albumText) {
 function start() {
     useSpectrum = getComputedStyle(eqEl).display !== "none" || cssSetting("--spectrum") === "1";
     if (useSpectrum) buildRing();
-    overlayEl.dataset.phase = popupConfig().enabled ? "hidden" : "visible";     //always set a phase
+    overlayEl.dataset.phase = PREVIEW ? "track" : (popupConfig().enabled ? "hidden" : "visible");     //always set a phase
     setInterval(updateNowPlaying, NOWPLAYING_POLL_MS);
     setInterval(tickProgressBar, PROGRESS_TICK_MS);
     setInterval(updateSpectrum, SPECTRUM_POLL_MS);
