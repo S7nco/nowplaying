@@ -284,29 +284,42 @@ function fallbackCopy(text, done) {
 // Cards and Sections
 // ====================================================
 
+// Makes an element: el("a", { className: "open", href: "/" }, "Open")
+// Props are set as properties; children can be elements or text
+function el(tag, props = {}, ...children) {
+    const node = Object.assign(document.createElement(tag), props);
+    node.append(...children);
+    return node;
+}
+
 function makeCard(name) {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.dataset.name = name;
-    card.innerHTML = `
-        <div class="view" data-theme="${name}"><div class="ph">Loading Preview</div></div>
-        <div class="row">
-            <span class="name"></span>
-            <div class="action">
-                <button class="fav"></button>
-                <a class="open" target="_blank" rel="noopener">Open</a>
-                <button class="copy">Copy URL</button>
-            </div>
-        </div>
-        <div class="tags"></div>`;
-    card.querySelector(".name").textContent = 
-        name.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-    card.querySelector(".open").href = themeUrl(name);
-    card.querySelector(".copy").addEventListener("click", e => copy(themeUrl(name), e.target));
-    const star = card.querySelector(".fav");
+    const view = el("div", { className: "view" }, el("div", { className: "ph" }, "Loading Preview"));
+    view.dataset.theme = name;
+
+    const star = el("button", { className: "fav" });
     styleStar(star, favorites.has(name));
     star.addEventListener("click", () => toggleFavorite(name));
-    observer.observe(card.querySelector(".view"));
+
+    const copyBtn = el("button", { className: "copy" }, "Copy URL");
+    copyBtn.addEventListener("click", () => copy(themeUrl(name), copyBtn));
+
+    const label = name.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+    const card = el("div", { className: "card" },
+        view,
+        el("div", { className: "row" },
+            el("span", { className: "name" }, label),
+            el("div", { className: "action" },
+                star,
+                el("a", { className: "open", href: themeUrl(name), target: "_blank", rel: "noopener" }, "Open"),
+                copyBtn,
+            ),
+        ),
+        el("div", { className: "tags" }),
+    );
+    card.dataset.name = name;
+
+    observer.observe(view);
     return card;
 }
 
