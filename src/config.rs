@@ -11,6 +11,7 @@ pub struct Config {
     pub eq_ceil_db: f32,    // level shown as a full bar
     pub eq_tilt_db: f32,    // boost for higher bands, per band
     pub tray_themes: Vec<String>,   // themes listed in the tray menu (the gallery shows all)
+    pub bind_address: String,   // who can connect: "0.0.0.0" = any device on your network, "127.0.0.1" = only your own machine
 }
 
 impl Default for Config {
@@ -23,6 +24,7 @@ impl Default for Config {
             eq_ceil_db: -27.0,   //-15
             eq_tilt_db: 3.0,
             tray_themes: vec!["default".into()],
+            bind_address: "127.0.0.1".into(), 
         }
     }
 }

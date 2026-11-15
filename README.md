@@ -125,6 +125,7 @@ Copy `config.example.toml` to `config.toml` (next to `nowplaying.exe`) to change
 | Setting | Default | What it does |
 |---|---|---|
 | `port` | 5000 | Port the overlay server uses | 
+| `bind_address` | `"127.0.0.1"` | Who can connect: `"127.0.0.1"` is this PC only. `"0.0.0.0"` lets other devices on your netowrk connect (see Network Note) | 
 | `process_name` | `"AmpLibraryAgent.exe, Spotify.exe"` | The players' process names, used to capture audio for the equalizer | 
 | `app_id_match` | `"applemusic, spotify"` | Part of the player's Windows media ID, used to find the right player |
 | `tray_themes` | `["default"]` | Themes shown in the tray menu until you pick favorites in the gallery | 
@@ -154,6 +155,7 @@ Change one value at a time, by about 5 for the floor and ceiling and by about 0.
 - **The equalizer doesn't move.** Check that `process_name` in `config.toml` matches the players' process name in Task Manager (Details tab). Restart the app after the player updates.
 - **The port is already in use.** Another program is using port 5000. Change the `port` in `config.toml`.
 - **A new theme isn't showing.** Refresh the Theme Gallery page. Also make sure Windows isn't hiding the extension and naming the file `mytheme.css.txt`.
+- **The overlay doesn't load from another PC or phone.** Set `bind_address = "0.0.0.0"` in `config.toml`, restart the app, and use the PC's network address (see Network Note) instead of `localhost`.
 - **Something else is wrong.** Look at `nowplaying.log` next to the exe.
 
 ## Reporting problems and ideas
@@ -163,7 +165,12 @@ Open an [issue](https://github.com/S7nco/nowplaying/issues) with your app versio
 
 ## Network Note
 
-The overlay server listens on all network interfaces, so you can open the overlay from another computer on your network, for example a second streaming PC. If you don't need that, make sure Windows Firewall only allows the app on private networks. The app does not send any data to the internet.
+By default the overlay server only accepts connections from the same PC (`bind_address = "127.0.0.1"`), so nothing else on your network can reach it. If OBS runs on another computer (a second streaming PC), or you want to open the gallery from a phone, add this to `config.toml` and restart the app: 
+```
+bind_address = "0.0.0.0"
+```
+
+Then use your PC's network address instead of `localhost`, for example `http://192.168.1.1:5000/overlay.html`. Run `ipconfig` in the terminal and look for **IPv4 Address** to find it. Windows may ask to allow network access the first time: allow **Private networks**. The app does no send any data to the internet.
 
 ## Building from Source
 

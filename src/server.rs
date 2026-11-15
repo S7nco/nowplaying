@@ -272,14 +272,15 @@ pub async fn run() {
 
     // if the port can't be bound, log the error and exit
     let port = config::get().port;
-    let listener = match tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await {
+    let addr = format!("{}:{port}", config::get().bind_address);
+    let listener = match tokio::net::TcpListener::bind(&addr).await {
         Ok(l) => l,
         Err(e) => {
-            log(&format!("Could not start server: {e}"));
+            log(&format!("Could not start server on {addr}: {e}"));
             std::process::exit(1);
         }
     };
-    log(&format!("Server running on http://localhost:{port}"));
+    log(&format!("Server running on http://localhost:{port} (listening on {addr})"));
     if let Err(e) = axum::serve(listener, app).await {
         log(&format!("Server stopped: {e}"));
         std::process::exit(1);

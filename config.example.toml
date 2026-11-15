@@ -3,6 +3,11 @@
 # Any line you delete (or any line starting with #) falls back to the default shown here.
 # Use "Copy this file to config.toml" only if you got it as config.example.toml
 
+# Who can connect to the overlay.
+# "127.0.0.1" only allows this PC. (default)
+# "0.0.0.0" lets other devices on your network use it (OBS on a second PC, a phone, etc.).
+# bind_address = "127.0.0.1"
+
 # Port the overlay server runs on. If you change it, change the address in OBS too.
 port = 5000
 
