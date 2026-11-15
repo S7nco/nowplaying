@@ -181,27 +181,24 @@ function clearViews(container) {
 }
 
 // Waits for the overlay inside the frame to start, then sizes the card around it
+// and re-sizes it whenever the overlay's size changes (fonts loading, a new song's text)
 function whenReady (frame, view) {
-    let tries = 0;
-    const timer = setInterval(() => {
-        const overlay = frame.contentDocument?.getElementById("overlay");
-        tries++;
-        if (!frame.isConnected) { clearInterval(timer); return; }
-        if (overlay && overlay.dataset.phase) {
-            clearInterval(timer);
+    frame.addEventListener("load", () => {
+        const win = frame.contentWindow;
+        const ready = () => {
+            if (!frame.isConnected) return;
             applyPlaying(frame);
+            const overlay = win.document.getElementById("overlay");
+            if (overlay) new win.ResizeObserver(() => layout(view)).observe(overlay);
             layout(view);
-            setTimeout(() => layout(view), 700);    // again once fonts and text have settled
-            setTimeout(() => layout(view), 2000);
-            setTimeout(() => showTags(frame, view), 1500);
-        } else if (tries > 40) {
-            clearInterval(timer);
-            layout(view);
-        }
-    }, 100);
+            showTags(frame, view);
+        };
+        if (win.overlayReady) ready();
+        else win.addEventListener("overlay-ready", ready, { once: true });
+    }, { once: true });
 }
 
-// Works out what theme includes by asking the page inside the frame, so teh list never goes stale
+// Works out what theme includes by asking the page inside the frame, so the list never goes stale
 function showTags(frame, view) {
     if (!frame.isConnected) return;
     const win = frame.contentWindow;

@@ -450,6 +450,9 @@ function start() {
     setInterval(updateSpectrum, SPECTRUM_POLL_MS);
     updateNowPlaying();
     connectSocket();
+    // Tell the gallery (if this is a preview) that the theme is applied
+    window.overlayReady = true;
+    window.dispatchEvent(new Event("overlay-ready"));
 }
 
 // Re-measure scrolling text whenever a font finishes loading
