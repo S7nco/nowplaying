@@ -108,7 +108,7 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
     let props = session.TryGetMediaPropertiesAsync()?.join()?;
     let title = props.Title()?.to_string();
     let artist_raw = props.Artist()?.to_string();
-    if title.is_empty() || artist_raw.is_empty() {
+    if title.is_empty() {
         return Ok(None);
     }
 
@@ -173,7 +173,7 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
 
     Ok(Some(TrackInfo {
         title: Some(title),
-        artist: Some(artist),
+        artist: Some(artist).filter(|a| !a.is_empty()), // no artist (e.g. some podcasts): null
         album,
         artwork: last_art.clone(),
         position: Some(position),

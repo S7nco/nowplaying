@@ -173,15 +173,20 @@ pub fn start_status_thread() -> Status {
         loop {
             let info = media::read_track();
             let text = match (&info.title, &info.artist) {
-                (Some(t), Some(a)) => {
+                (Some(t), a) => {
                     let state = if info.playing == Some(true) {
                         "Playing"
                     } else {
                         "Paused"
                     };
+                    // "Title - Artist", or just the title when there's no artist
+                    let song = match a {
+                        Some(a) => format!("{t} - {a}"),
+                        None => t.clone(),
+                    };
                     (
-                        truncate(&format!("{state}: {t} - {a}"), 60),
-                        truncate(&format!("Now Playing Server\n{t} - {a}"), 120),
+                        truncate(&format!("{state}: {song}"), 60),
+                        truncate(&format!("Now Playing Server\n{song}"), 120),
                     )
                 }
                 _ => {
