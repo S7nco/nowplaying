@@ -119,7 +119,7 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
                 .AlbumTitle()
                 .ok()
                 .map(|a| a.to_string())
-                .filter(|a| !a.is_empty() && a.eq_ignore_ascii_case(&title))
+                .filter(|a| !a.is_empty() && !a.eq_ignore_ascii_case(&title))
         });
 
     // Only fetch artwork when the song changes
