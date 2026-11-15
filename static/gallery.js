@@ -33,8 +33,9 @@ function saveFavorite(name, on) {
 function applyServerFavorites(list) {
     favorites = new Set(list);
     try { localStorage.setItem(FAV_KEY, JSON.stringify(list)); } catch (e) {}
-    document.querySelectorAll(".card").forEach(card =>
-        styleStar(card.querySelector(".fav"), favorites.has(card.dataset.name)));
+    document.querySelectorAll(".fav").forEach(b =>
+        styleStar(b, favorites.has(b.dataset.name))
+    );
     renderFavorites();
     updateCount();
 }
@@ -91,9 +92,9 @@ function toggleFavorite(name) {
     const on = !favorites.has(name);
     if (on) favorites.add(name); else favorites.delete(name);
     saveFavorite(name, on);
-    // update every card for this theme (it can be in Favorites and its own group)
-    document.querySelectorAll(".card").forEach(card => {
-        if (card.dataset.name === name) styleStar(card.querySelector(".fav"), favorites.has(name));
+    // update every star for this theme (its card, the favorites copy, the enlarged view)
+    document.querySelectorAll(".fav").forEach(b => {
+        if (b.dataset.name === name) styleStar(b, favorites.has(name));
     });
     renderFavorites();
     updateCount();
@@ -309,6 +310,7 @@ function makeCard(name) {
 
     const star = el("button", { className: "fav" });
     styleStar(star, favorites.has(name));
+    star.dataset.name = name;
     star.addEventListener("click", () => toggleFavorite(name));
 
     const copyBtn = el("button", { className: "copy" }, "Copy URL");
@@ -316,7 +318,7 @@ function makeCard(name) {
 
     const label = themeLabel(name);
 
-    const size = el("span", { className: "tag size", title: "Width × height for the OBS browser source" });
+    const size = el("span", { className: "tag size", title: "Width × Height for the OBS browser source" });
 
     const card = el("div", { className: "card" },
         view,
@@ -348,12 +350,40 @@ function openBig(name) {
     view.dataset.maxH = BIG_MAX_H;
     view.dataset.maxScale = 1;  // never larger than real size
 
+    // favorites star, kept in step with the card's
+    const star = el("button", { className: "fav" });
+    star.dataset.name = name;
+    styleStar(star, favorites.has(name));
+    star.addEventListener("click", () => toggleFavorite(name));
+
+    // the URL to paste into OBS; click the box to select it all
+    const url = themeUrl(name);
+    const urlBox = el("input", { className: "big-url", type: "text", value: url, readOnly: true });
+    urlBox.addEventListener("focus", () => urlBox.select());
+    const copyBtn = el("button", { className: "copy" }, "Copy URL");
+    copyBtn.addEventListener("click", () => copy(url, copyBtn));
+
+    // background swatches: a copy of the page's, sharing the same setting
+    const swatches = document.querySelector(".bar .swatches").cloneNode(true);
+    swatches.querySelectorAll(".sw").forEach(sw =>
+        sw.addEventListener("click", () => setPreviewBg(sw.dataset.bg)));
+
     const closeBtn = el("button", { className: "close", title: "Close (Esc)" }, "×");
     const dialog = el("dialog", { className: "big" },
         el("div", { className: "big-body" },
-            el("div", { className: "big-head" }, el("h2", {}, themeLabel(name)), closeBtn),
+            el("div", { className: "big-head" },
+                el("h2", {}, themeLabel(name)),
+                el("div", { className: "action" }, star, closeBtn),
+            ),
             view,
-            el("div", { className: "tags" }, el("span", { className: "tag size" })),
+            el("div", { className: "tags" },
+                el("span", { className: "tag size", title: "Width × Height for the OBS browser source" })),
+            el("div", { className: "big-foot" },
+                urlBox,
+                el("a", { className: "open", href: url, target: "_blank", rel: "noopener" }, "Open"),
+                copyBtn,
+                swatches,
+            ),
         ),
     );
 
