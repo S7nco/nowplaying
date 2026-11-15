@@ -112,7 +112,7 @@ Themes are CSS files:
 - `static/themes/examples/` holds the example themes. Each one shows off a single feature (equalizer, popup mode, time display, blurred cover background, artwork size, and so on).
 - `static/themes/styles/` holds finished styles.
 - `static/themes/game-inspired/` holds themes inspired by games.
-- `static/themes/custom/` is for your own themes.
+- `static/themes/custom/` is for your own themes. Name the file with letters, numbers, `-` and `_` only, e.g. `my-theme.css`. 
 
 If two themes have the same name, the first one found is used in this order: custom, styles, game-inspired, examples. Every setting a theme can change, with its default, is listed in [THEMES.md](THEMES.md).
 
@@ -125,7 +125,7 @@ Copy `config.example.toml` to `config.toml` (next to `nowplaying.exe`) to change
 | Setting | Default | What it does |
 |---|---|---|
 | `port` | 5000 | Port the overlay server uses | 
-| `bind_address` | `"127.0.0.1"` | Who can connect: `"127.0.0.1"` is this PC only. `"0.0.0.0"` lets other devices on your netowrk connect (see Network Note) | 
+| `bind_address` | `"127.0.0.1"` | Who can connect: `"127.0.0.1"` is this PC only. `"0.0.0.0"` lets other devices on your network connect (see Network Note) | 
 | `process_name` | `"AmpLibraryAgent.exe, Spotify.exe"` | The players' process names, used to capture audio for the equalizer | 
 | `app_id_match` | `"applemusic, spotify"` | Part of the player's Windows media ID, used to find the right player |
 | `tray_themes` | `["default"]` | Themes shown in the tray menu until you pick favorites in the gallery | 
@@ -154,7 +154,7 @@ Change one value at a time, by about 5 for the floor and ceiling and by about 0.
 - **Spotify isn't detected.** In Spotify, turn on **Show desktop overlay when using media keys**, then restart Spotify. Make sure it's the desktop app, since the web player in a browser shows up under the browser's name.
 - **The equalizer doesn't move.** Check that `process_name` in `config.toml` matches the players' process name in Task Manager (Details tab). Restart the app after the player updates.
 - **The port is already in use.** Another program is using port 5000. Change the `port` in `config.toml`.
-- **A new theme isn't showing.** Refresh the Theme Gallery page. Also make sure Windows isn't hiding the extension and naming the file `mytheme.css.txt`.
+- **A new theme isn't showing.** Refresh the Theme Gallery page. Check the file name uses only letters, numbers, `-` and `_`, and that Windows isn't hiding the extension and naming it `mytheme.css.txt`.
 - **The overlay doesn't load from another PC or phone.** Set `bind_address = "0.0.0.0"` in `config.toml`, restart the app, and use the PC's network address (see Network Note) instead of `localhost`.
 - **Something else is wrong.** Look at `nowplaying.log` next to the exe.
 

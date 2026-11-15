@@ -2,7 +2,7 @@
 A theme is one CSS file. The overlay page (style.css) provides the layout, and a theme changes the look by setting CSS variables, and optionally by adding its own CSS rules.
 
 - Put your theme in *static/themes/custom/* (your own themes), or see the ones in *static/themes/examples/*, *static/themes/styles/* and *static/themes/game-inspired/*. 
-- Use it by adding *?theme=NAME* to the overlay URL, for example *http://localhost:5000/overlay.html?theme=neon*. The name is the file name without the *.css*.
+- Use it by adding *?theme=NAME* to the overlay URL, for example *http://localhost:5000/overlay.html?theme=neon*. The name is the file name without the *.css*, and can use only letters, numbers, `-` and `_` (no spaces or extra dots).
 - If two themes have the same name, the first one found is used, in this order: custom, styles, game-inspired, examples.
 - Open the Theme Gallery (*/gallery.html*) to preview it. Refresh the page after adding a theme, and hard refresh (Ctrl+Shift+R) after editing one.
 
