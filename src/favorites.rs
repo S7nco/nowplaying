@@ -62,3 +62,13 @@ pub fn set(names: Vec<String>) -> Vec<String> {
     VERSION.fetch_add(1, Ordering::Relaxed);
     clean
 }
+
+/// Adds or removes a single theme, so two gallery tabs can't overwrite each other's changes
+pub fn set_one(name: &str, on: bool) -> Vec<String> {
+    let mut names = get();
+    names.retain(|n| n != name);
+    if on {
+        names.push(name.to_string());
+    }
+    set(names)
+}

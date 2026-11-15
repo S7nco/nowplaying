@@ -19,6 +19,25 @@ const FAV_KEY = "nowplaying-favorites";
 let favorites = new Set();
 try { favorites = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || "[]")); } catch (e) {}
 
+// Adds or removes one theme on the server, then shows the server's full list,
+// which also picks up anything another gallery tab changed
+function saveFavorite(name, on) {
+    try { localStorage.setItem(FAV_KEY, JSON.stringify([...favorites])); } catch (e) {}
+    fetch("/favorites/" + encodeURIComponent(name), { method: on ? "PUT" : "DELETE" })
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(applyServerFavorites)
+        .catch(() => {});
+}
+
+// Replaces this tab's favorites with the server's list and redraws the stars
+function applyServerFavorites(list) {
+    favorites = new Set(list);
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(list)); } catch (e) {}
+    document.querySelectorAll(".card").forEach(card =>
+        styleStar(card.querySelector(".fav"), favorites.has(card.dataset.name)));
+    renderFavorites();
+    updateCount();
+}
 
 function saveFavorites() {
     try { localStorage.setItem(FAV_KEY, JSON.stringify([...favorites])); } catch (e) {}
@@ -47,6 +66,21 @@ async function loadFavorites() {
     } catch {}
 }
 
+// Coming back to this tab or window: pick up stars changed in another tab or browser
+async function refreshFavorites() {
+    try {
+        const res = await fetch("/favorites", { cache: "no-store" });
+        const state = await res.json();
+        if (!state.saved) return; // nothing saved yet: keep what this tab shows
+        const same = state.list.length === favorites.size && state.list.every(n => favorites.has(n));
+        if (!same) applyServerFavorites(state.list);
+    } catch {}
+}
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") refreshFavorites();
+});
+window.addEventListener("focus", refreshFavorites);
+
 function styleStar(button, on) {
     button.classList.toggle("on", on);
     button.textContent = on ? "★" : "☆";
@@ -54,8 +88,9 @@ function styleStar(button, on) {
 }
 
 function toggleFavorite(name) {
-    if (favorites.has(name)) favorites.delete(name); else favorites.add(name);
-    saveFavorites();
+    const on = !favorites.has(name);
+    if (on) favorites.add(name); else favorites.delete(name);
+    saveFavorite(name, on);
     // update every card for this theme (it can be in Favorites and its own group)
     document.querySelectorAll(".card").forEach(card => {
         if (card.dataset.name === name) styleStar(card.querySelector(".fav"), favorites.has(name));

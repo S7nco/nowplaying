@@ -1,6 +1,6 @@
 use crate::{audio, config, favorites, log, media};
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
-use axum::extract::{Query, State};
+use axum::extract::{Query, State, Path};
 use axum::http::{HeaderValue, header};
 use axum::response::IntoResponse;
 use axum::{Json, Router, routing::get};
@@ -111,6 +111,14 @@ async fn get_favorites() -> Json<FavoriteState> {
 
 async fn put_favorites(Json(names): Json<Vec<String>>) -> Json<Vec<String>> {
     Json(favorites::set(names))
+}
+
+async fn add_favorite(Path(name): Path<String>) -> Json<Vec<String>> {
+    Json(favorites::set_one(&name, true))
+}
+
+async fn remove_favorite(Path(name): Path<String>) -> Json<Vec<String>> {
+    Json(favorites::set_one(&name, false))
 }
 
 // =============================================================================
@@ -268,6 +276,7 @@ pub async fn run() {
         .route("/themes.json", get(themes))
         .route("/ws", get(ws_handler))
         .route("/favorites", get(get_favorites).put(put_favorites))
+        .route("/favorites/{name}", axum::routing::put(add_favorite).delete(remove_favorite))
         .with_state(state)
         // Serve static files from the "static" directory.
         .fallback_service(ServeDir::new("static"))
