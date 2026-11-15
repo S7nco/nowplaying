@@ -34,6 +34,22 @@
         .sw { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 2px solid #3a4052; cursor: pointer; }
         .sw:hover { border-color: #6b7389; }
         .sw.on { border-color: #b9cdf5; box-shadow: 0 0 0 2px #25304a; }
+        .view { cursor: pointer; }
+        dialog.big .view { cursor: default; }
+        dialog.big { 
+                padding: 0;             /* keep at 0: the click-outside check relies on it */
+                width: min(960px, calc(100vw - 32px));
+                max-height: calc(100vh - 32px);
+                border: 1px solid #2a3040;
+                border-radius: 12px;
+                background: #151821;
+                color: inherit;
+        }
+        dialog.big::backdrop { background: rgba(0, 0, 0, 0.7); }
+        .big-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+        .big-head h2 { margin: 0; font-size: 18px; }
+        .close { background: none; border: 0; padding: 0 4px; font-size: 24px; line-height: 1; color: #9aa3b8; cursor: pointer; }
+        .close:hover { color: #fff; }
 
 #playToggle {
         margin-left: 10px;

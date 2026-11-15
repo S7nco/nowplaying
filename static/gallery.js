@@ -240,7 +240,9 @@ function layout(view) {
     if (sizeTag) sizeTag.textContent = `${obsW}×${obsH}`;
 
     const cardW = view.clientWidth;
-    const scale = Math.min((cardW - PAD * 2) / r.width, (MAX_H - PAD * 2) / r.height);
+    const maxH = Number(view.dataset.maxH) || MAX_H;    // the enlarged view sets its own limits
+    const maxScale = Number(view.dataset.maxScale) || Infinity;
+    const scale = Math.min((cardW - PAD * 2) / r.width, (maxH - PAD * 2) / r.height, maxScale);
     view.style.height = Math.round(r.height * scale + PAD * 2) + "px";
     const x = (cardW - r.width * scale) / 2 - r.left * scale;
     const y = PAD - r.top * scale;
@@ -295,9 +297,15 @@ function el(tag, props = {}, ...children) {
     return node;
 }
 
+// "vinyl-eq-bars" -> "Vinyl Eq Bars"
+function themeLabel(name) {
+    return name.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function makeCard(name) {
     const view = el("div", { className: "view" }, el("div", { className: "ph" }, "Loading Preview"));
     view.dataset.theme = name;
+    view.addEventListener("click", () => openBig(name));
 
     const star = el("button", { className: "fav" });
     styleStar(star, favorites.has(name));
@@ -306,7 +314,7 @@ function makeCard(name) {
     const copyBtn = el("button", { className: "copy" }, "Copy URL");
     copyBtn.addEventListener("click", () => copy(themeUrl(name), copyBtn));
 
-    const label = name.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    const label = themeLabel(name);
 
     const size = el("span", { className: "tag size", title: "Width × height for the OBS browser source" });
 
@@ -326,6 +334,38 @@ function makeCard(name) {
 
     observer.observe(view);
     return card;
+}
+
+// ====================================================
+// Enlarged view: Click a preview to see that theme bigger
+// ====================================================
+
+const BIG_MAX_H = 520; // tallest the enlarged preview gets, in pixels
+
+function openBig(name) {
+    const view = el("div", { className: "view" });
+    view.dataset.theme = name;
+    view.dataset.maxH = BIG_MAX_H;
+    view.dataset.maxScale = 1;  // never larger than real size
+
+    const closeBtn = el("button", { className: "close", title: "Close (Esc)" }, "×");
+    const dialog = el("dialog", { className: "big" },
+        el("div", { className: "big-body" },
+            el("div", { className: "big-head" }, el("h2", {}, themeLabel(name)), closeBtn),
+            view,
+            el("div", { className: "tags" }, el("span", { className: "tag size" })),
+        ),
+    );
+
+    closeBtn.addEventListener("click", () => dialog.close());
+    // a click on the dimmed area around the box lands on the dialog itself
+    dialog.addEventListener("click", e => { if (e.target === dialog) dialog.close(); });
+    // closing (Esc, ×, outside) removes it, which also stops its preview
+    dialog.addEventListener("close", () => dialog.remove());
+
+    document.body.appendChild(dialog);
+    dialog.showModal();
+    loadView(view);
 }
 
 function allThemeNames() {
