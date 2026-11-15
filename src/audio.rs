@@ -1,8 +1,8 @@
-use rustfft::{num_complex::Complex, Fft, FftPlanner};
+use rustfft::{Fft, FftPlanner, num_complex::Complex};
 use std::collections::VecDeque;
 use std::error::Error;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::Ordering;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use sysinfo::{ProcessRefreshKind, RefreshKind, System};
@@ -14,13 +14,12 @@ const SAMPLE_RATE: f32 = 48000.0;
 const MIN_HZ: f32 = 60.0;
 const MAX_HZ: f32 = 12000.0;
 
-
 pub type Bands = Arc<Mutex<Vec<f32>>>;
 
 pub fn find_pid(name: &str) -> Option<u32> {
     let refreshes = RefreshKind::nothing().with_processes(ProcessRefreshKind::nothing());
     let Ok(system) = System::new_with_specifics(refreshes) else {
-        return None
+        return None;
     };
     let matches: Vec<_> = system
         .processes()
@@ -30,7 +29,10 @@ pub fn find_pid(name: &str) -> Option<u32> {
     // the top-level one: its parent isn't another copy of the same program
     let root = matches
         .iter()
-        .filter(|p| !p.parent().map_or(false, |pp| matches.iter().any(|m| m.pid() == pp)))
+        .filter(|p| {
+            !p.parent()
+                .map_or(false, |pp| matches.iter().any(|m| m.pid() == pp))
+        })
         .max_by_key(|p| p.start_time());
     root.or(matches.first()).map(|p| p.pid().as_u32())
 }
@@ -38,19 +40,21 @@ pub fn find_pid(name: &str) -> Option<u32> {
 // Runs forever on its own thread. Looks for Apple Music, captures from it.
 // and if that fails waits 2 seconds and tries agains
 pub fn start(bands: Bands) {
-    thread::spawn(move || loop {
-        let names = crate::media::split_list(&crate::config::get().process_name);
-        let index = crate::media::ACTIVE_APP
-            .load(Ordering::Relaxed)
-            .min(names.len().saturating_sub(1));
-        if let Some(pid) = names.get(index).and_then(|n| find_pid(n)) {
-            crate::log(&format!("Capturing audio from process {pid}"));
-            if let Err(e) = capture_loop(pid, index, &bands) {
-                crate::log(&format!("Capture stopped: {e}"));
+    thread::spawn(move || {
+        loop {
+            let names = crate::media::split_list(&crate::config::get().process_name);
+            let index = crate::media::ACTIVE_APP
+                .load(Ordering::Relaxed)
+                .min(names.len().saturating_sub(1));
+            if let Some(pid) = names.get(index).and_then(|n| find_pid(n)) {
+                crate::log(&format!("Capturing audio from process {pid}"));
+                if let Err(e) = capture_loop(pid, index, &bands) {
+                    crate::log(&format!("Capture stopped: {e}"));
+                }
             }
+            *bands.lock().unwrap() = vec![0.0; BANDS];
+            thread::sleep(Duration::from_secs(2));
         }
-        *bands.lock().unwrap() = vec![0.0; BANDS];
-        thread::sleep(Duration::from_secs(2));
     });
 }
 
@@ -61,7 +65,7 @@ fn capture_loop(pid: u32, index: usize, bands: &Bands) -> Result<(), Box<dyn Err
     let format = WaveFormat::new(32, 32, &SampleType::Float, 48000, 2, None);
     let mut client = AudioClient::new_application_loopback_client(pid, true)?;
     let mode = StreamMode::EventsShared {
-        autoconvert: true, 
+        autoconvert: true,
         buffer_duration_hns: 0,
     };
     client.initialize_client(&format, &Direction::Capture, &mode)?;
@@ -112,14 +116,13 @@ fn capture_loop(pid: u32, index: usize, bands: &Bands) -> Result<(), Box<dyn Err
             last_check = Instant::now();
             let names = crate::media::split_list(&crate::config::get().process_name);
             let active = crate::media::ACTIVE_APP.load(Ordering::Relaxed);
-            if active != index || names.get(index).and_then(|n| find_pid(n)) != Some(pid) { 
+            if active != index || names.get(index).and_then(|n| find_pid(n)) != Some(pid) {
                 crate::log(&format!("Player process changed, reconnecting"));
                 return Ok(());
             }
         }
-    };
+    }
 }
-
 
 #[allow(non_snake_case)]
 fn compute_bands(
@@ -130,11 +133,11 @@ fn compute_bands(
 ) -> Vec<f32> {
     let cfg = crate::config::get();
     let (DB_FLOOR, DB_CEIL, TILT_DB_PER_BAND) = (cfg.eq_floor_db, cfg.eq_ceil_db, cfg.eq_tilt_db);
-    let range = (DB_CEIL - DB_FLOOR).max(1.0);  // guards against a bad config (ceil <= floor)
+    let range = (DB_CEIL - DB_FLOOR).max(1.0); // guards against a bad config (ceil <= floor)
     let mut input: Vec<Complex<f32>> = samples
         .iter()
         .zip(window)
-        .map(|(s, w) | Complex::new(s * w, 0.0))
+        .map(|(s, w)| Complex::new(s * w, 0.0))
         .collect();
     fft.process(&mut input);
 
@@ -152,7 +155,8 @@ fn compute_bands(
         let lo_hz = MIN_HZ * ratio.powi(b as i32);
         let hi_hz = lo_hz * ratio;
         let lo = (lo_hz / bin_hz).floor() as usize;
-        let hi = ((hi_hz / bin_hz).ceil() as usize).min(mags.len())
+        let hi = ((hi_hz / bin_hz).ceil() as usize)
+            .min(mags.len())
             .max(lo + 1)
             .min(mags.len());
         let slice = &mags[lo..hi];

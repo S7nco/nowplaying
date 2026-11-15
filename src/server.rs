@@ -1,11 +1,11 @@
-use crate::{audio, config, log, favorites, media};
+use crate::{audio, config, favorites, log, media};
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::extract::{Query, State};
-use axum::http::{header, HeaderValue};
+use axum::http::{HeaderValue, header};
 use axum::response::IntoResponse;
-use axum::{routing::get, Json, Router};
+use axum::{Json, Router, routing::get};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 use tokio::sync::broadcast;
@@ -35,7 +35,9 @@ async fn current_track() -> media::TrackInfo {
         }
     }
     // the Windows calls wait for an answer, so run them off the main asysnc threads
-    let info = tokio::task::spawn_blocking(media::read_track).await.unwrap();
+    let info = tokio::task::spawn_blocking(media::read_track)
+        .await
+        .unwrap();
     *cache.lock().unwrap() = Some((Instant::now(), info.clone()));
     info
 }
@@ -90,7 +92,7 @@ async fn themes() -> Json<Themes> {
 }
 
 // =============================================================================
-// Favorites: GET /favorites (returns { saved, list }: the favorite, themes, and whether 
+// Favorites: GET /favorites (returns { saved, list }: the favorite, themes, and whether
 //                           they came from a saved favorites.json)
 //            PUT /favorites (updates the list of favorite themes)
 // =============================================================================
@@ -202,7 +204,11 @@ fn start_broadcasters(state: AppState) {
             // did the position jump, like when you skip around in a song?
             let jumped = match (position, last_seen) {
                 (Some(p), Some((lp, when, was_playing))) => {
-                    let expected = if was_playing { lp + when.elapsed().as_secs_f64() } else { lp };
+                    let expected = if was_playing {
+                        lp + when.elapsed().as_secs_f64()
+                    } else {
+                        lp
+                    };
                     (p - expected).abs() > 1.5
                 }
                 _ => false,
@@ -280,7 +286,9 @@ pub async fn run() {
             std::process::exit(1);
         }
     };
-    log(&format!("Server running on http://localhost:{port} (listening on {addr})"));
+    log(&format!(
+        "Server running on http://localhost:{port} (listening on {addr})"
+    ));
     if let Err(e) = axum::serve(listener, app).await {
         log(&format!("Server stopped: {e}"));
         std::process::exit(1);

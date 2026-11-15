@@ -3,10 +3,12 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tray_icon::{
-    menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem, Submenu},
     Icon, TrayIconBuilder,
+    menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem, Submenu},
 };
-use windows::Win32::UI::WindowsAndMessaging::{DispatchMessageW, GetMessageW, TranslateMessage, MSG, SetTimer, WM_TIMER};
+use windows::Win32::UI::WindowsAndMessaging::{
+    DispatchMessageW, GetMessageW, MSG, SetTimer, TranslateMessage, WM_TIMER,
+};
 
 // ============================================================
 // Constants and types
@@ -17,7 +19,7 @@ use windows::Win32::UI::WindowsAndMessaging::{DispatchMessageW, GetMessageW, Tra
 enum Action {
     Open(String),
     Copy(String),
-    Restart, 
+    Restart,
     Quit,
 }
 
@@ -141,8 +143,8 @@ fn rebuild_favorites(
 /// Makes the tray menu follow Windows' dark mode setting.
 /// Uses unoffical uxtheme.dll functions, so it could stop working in a future Windows update.
 fn enable_dark_menus() {
-    use windows::core::{w, PCSTR};
     use windows::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryW};
+    use windows::core::{PCSTR, w};
 
     unsafe {
         if let Ok(lib) = LoadLibraryW(w!("uxtheme.dll")) {
@@ -167,26 +169,36 @@ pub fn start_status_thread() -> Status {
         "Now Playing Server:".to_string(),
     )));
     let writer = shared.clone();
-    std::thread::spawn(move || loop {
-        let info = media::read_track();
-        let text = match (&info.title, &info.artist) {
-            (Some(t), Some(a)) => {
-                let state = if info.playing == Some(true) { "Playing" } else { "Paused" };
-                (
-                    truncate(&format!("{state}: {t} - {a}"), 60),
-                    truncate(&format!("Now Playing Server\n{t} - {a}"), 120),
-                )
-            }
-            _ => {
-                let running = media::split_list(&config::get().process_name)
-                    .iter()
-                    .any(|name| audio::find_pid(name).is_some());
-                let msg = if running { "No Song Detected" } else { "Application Not Running" };
-                (msg.to_string(), format!("Now Playing Server\n{msg}"))
-            }
-        };
-        *writer.lock().unwrap() = text;
-        std::thread::sleep(Duration::from_secs(3));
+    std::thread::spawn(move || {
+        loop {
+            let info = media::read_track();
+            let text = match (&info.title, &info.artist) {
+                (Some(t), Some(a)) => {
+                    let state = if info.playing == Some(true) {
+                        "Playing"
+                    } else {
+                        "Paused"
+                    };
+                    (
+                        truncate(&format!("{state}: {t} - {a}"), 60),
+                        truncate(&format!("Now Playing Server\n{t} - {a}"), 120),
+                    )
+                }
+                _ => {
+                    let running = media::split_list(&config::get().process_name)
+                        .iter()
+                        .any(|name| audio::find_pid(name).is_some());
+                    let msg = if running {
+                        "No Song Detected"
+                    } else {
+                        "Application Not Running"
+                    };
+                    (msg.to_string(), format!("Now Playing Server\n{msg}"))
+                }
+            };
+            *writer.lock().unwrap() = text;
+            std::thread::sleep(Duration::from_secs(3));
+        }
     });
     shared
 }
@@ -195,7 +207,7 @@ pub fn start_status_thread() -> Status {
 pub fn run(shared: Status) {
     // Enable dark menus
     enable_dark_menus();
-    
+
     // the tray icon and its menu live on the main thread
     let menu = Menu::new();
     let status_item = MenuItem::new("Starting...", false, None); // false = greyed out
@@ -214,14 +226,23 @@ pub fn run(shared: Status) {
     let gallery = MenuItem::new("Theme Gallery", true, None);
     actions.lock().unwrap().insert(
         gallery.id().clone(),
-        Action::Open(format!("http://localhost:{}/gallery.html", config::get().port)),
+        Action::Open(format!(
+            "http://localhost:{}/gallery.html",
+            config::get().port
+        )),
     );
 
     let restart = MenuItem::new("Restart", true, None);
-    actions.lock().unwrap().insert(restart.id().clone(), Action::Restart);
+    actions
+        .lock()
+        .unwrap()
+        .insert(restart.id().clone(), Action::Restart);
 
     let quit = MenuItem::new("Quit", true, None);
-    actions.lock().unwrap().insert(quit.id().clone(), Action::Quit);
+    actions
+        .lock()
+        .unwrap()
+        .insert(quit.id().clone(), Action::Quit);
 
     menu.append(&status_item).unwrap();
     menu.append(&PredefinedMenuItem::separator()).unwrap();

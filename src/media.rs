@@ -1,6 +1,6 @@
 use serde::Serialize;
-use std::sync::{Mutex, OnceLock};
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Mutex, OnceLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 use windows::Media::Control::{
     GlobalSystemMediaTransportControlsSessionManager as Manager,
@@ -81,11 +81,11 @@ fn log_artwork_once(key: &(String, String), msg: String) {
 // Result<..> means "this can fail". The ? after a call means "if it failed, stop and return the error".
 fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
     let manager = manager()?;
-    
+
     // Find the Apple Music session.
     // Find a session from any of the listed players; prefer one that is playing
     let wanted = split_list(&crate::config::get().app_id_match);
-    let mut found:Option<(_, usize, bool)> = None;
+    let mut found: Option<(_, usize, bool)> = None;
     for s in manager.GetSessions()? {
         let id = s.SourceAppUserModelId()?.to_string().to_lowercase();
         let Some(index) = wanted.iter().position(|w| id.contains(w.as_str())) else {
@@ -116,22 +116,23 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
     let timeline = session.GetTimelineProperties()?;
     let position = timeline.Position()?.Duration as f64 / 10_000_000.0;
     let duration = timeline.EndTime()?.Duration as f64 / 10_000_000.0;
-    let percent = if duration > 0.0 { position / duration * 100.0 } else { 0.0 };
+    let percent = if duration > 0.0 {
+        position / duration * 100.0
+    } else {
+        0.0
+    };
     let playing = session.GetPlaybackInfo()?.PlaybackStatus()? == PlaybackStatus::Playing;
 
     // "Aritst - Album" -> artist and album
     let mut parts = artist_raw.split(" \u{2014} "); // em dash
     let artist = parts.next().unwrap_or("").to_string();
-    let album = parts
-        .next()
-        .map(|s| s.to_string())
-        .or_else(|| { 
-            props
-                .AlbumTitle()
-                .ok()
-                .map(|a| a.to_string())
-                .filter(|a| !a.is_empty())
-        });
+    let album = parts.next().map(|s| s.to_string()).or_else(|| {
+        props
+            .AlbumTitle()
+            .ok()
+            .map(|a| a.to_string())
+            .filter(|a| !a.is_empty())
+    });
 
     // Only fetch artwork when the song changes
     let key = (title.clone(), artist_raw.clone());
@@ -152,12 +153,19 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
                         *last_track = Some(key);
                     }
                 }
-                Ok(Some(bytes)) => log_artwork_once(&key, format!(
-                    "Artwork: {} bytes for {title:?} isn't an image yet, retrying",
-                    bytes.len()
-                )),
-                Ok(None) => log_artwork_once(&key, format!("Artwork: empty thumbnail for {title:?}")),
-                Err(e) => log_artwork_once(&key, format!("Artwork: read failed for {title:?}: {e}")),
+                Ok(Some(bytes)) => log_artwork_once(
+                    &key,
+                    format!(
+                        "Artwork: {} bytes for {title:?} isn't an image yet, retrying",
+                        bytes.len()
+                    ),
+                ),
+                Ok(None) => {
+                    log_artwork_once(&key, format!("Artwork: empty thumbnail for {title:?}"))
+                }
+                Err(e) => {
+                    log_artwork_once(&key, format!("Artwork: read failed for {title:?}: {e}"))
+                }
             },
             Err(e) => log_artwork_once(&key, format!("Artwork: no thumbnail for {title:?}: {e}")),
         }
