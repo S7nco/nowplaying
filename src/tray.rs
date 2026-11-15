@@ -178,7 +178,9 @@ pub fn start_status_thread() -> Status {
                 )
             }
             _ => {
-                let running = audio::find_pid(&config::get().process_name).is_some();
+                let running = media::split_list(&config::get().process_name)
+                    .iter()
+                    .any(|name| audio::find_pid(name).is_some());
                 let msg = if running { "No Song Detected" } else { "Application Not Running" };
                 (msg.to_string(), format!("Now Playing Server\n{msg}"))
             }

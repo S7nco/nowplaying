@@ -19,7 +19,6 @@ mod favorites;  // handles the list of favorite themes
 pub use logging::log;
 
 
-
 /// Returns true if another copy of the app is already running.
 /// Uses a named mutex, which Windows releases automatically when the app exits
 fn already_running() -> bool {
@@ -47,6 +46,14 @@ fn already_running() -> bool {
 // Main: starts the server, the status thread, and the tray icon
 // ============================================================
 fn main() {
+    // Run from the exe's own folder, so static/ and config.toml are found no matter how the app is launched
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() {
+            if dir.join("static").is_dir() {
+                let _ = std::env::set_current_dir(dir);
+            }
+        }
+    }
 
     // After "Restart", the old copy is still shutting down: wait up to ~3 seconds for it
     let restarted = std::env::args().any(|a| a == "--restarted");
