@@ -19,7 +19,6 @@ const FAV_KEY = "nowplaying-favorites";
 let favorites = new Set();
 try { favorites = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || "[]")); } catch (e) {}
 
-const MIGRATED_KEY = "nowplaying-favorites-migrated";
 
 function saveFavorites() {
     try { localStorage.setItem(FAV_KEY, JSON.stringify([...favorites])); } catch (e) {}
@@ -33,17 +32,18 @@ function saveFavorites() {
 async function loadFavorites() {
     try { 
         const res = await fetch("/favorites", { cache: "no-store" });
-        const server = await res.json();
-        const serverSet = new Set(server);
-        server.forEach((n) => favorites.add(n));
-        // one time: merge stars you set before this feature existed
-        if (!localStorage.getItem(MIGRATED_KEY)) {
-            const local = JSON.parse(localStorage.getItem(FAV_KEY) || "[]");
-            local.forEach((n) => favorites.add(n));
-            localStorage.setItem(MIGRATED_KEY, "1");
+        const state = await res.json();
+        if (state.saved) {
+            // there is a saved favorites.json: the server's list is the truth
+            favorites = new Set(state.list);
+            try { localStorage.setItem(FAV_KEY, JSON.stringify(state.list)); } catch (e) {}
+        } else if (favorites.size > 0) {
+            // no saved file (fresh folder): this browser's stars go up to the server
+            saveFavorites();
+        } else {
+            // nothing anywhere: show the default list from config.toml
+            favorites = new Set(state.list);
         }
-        // the browser knows stars the server doesn't (e.g. fresh unzip): sync them
-        if ([...favorites].some((n) => !serverSet.has(n))) saveFavorites();
     } catch {}
 }
 

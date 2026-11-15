@@ -90,11 +90,21 @@ async fn themes() -> Json<Themes> {
 }
 
 // =============================================================================
-// Favorites: GET /favorites (returns the list of favorite themes)
+// Favorites: GET /favorites (returns { saved, list }: the favorite, themes, and whether 
+//                           they came from a saved favorites.json)
 //            PUT /favorites (updates the list of favorite themes)
 // =============================================================================
-async fn get_favorites() -> Json<Vec<String>> {
-    Json(favorites::get())
+#[derive(serde::Serialize)]
+struct FavoriteState {
+    saved: bool,
+    list: Vec<String>,
+}
+
+async fn get_favorites() -> Json<FavoriteState> {
+    Json(FavoriteState {
+        saved: favorites::is_saved(),
+        list: favorites::get(),
+    })
 }
 
 async fn put_favorites(Json(names): Json<Vec<String>>) -> Json<Vec<String>> {
