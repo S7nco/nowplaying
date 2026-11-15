@@ -154,7 +154,7 @@ Change one value at a time, by about 5 for the floor and ceiling and by about 0.
 - **Spotify isn't detected.** In Spotify, turn on **Show desktop overlay when using media keys**, then restart Spotify. Make sure it's the desktop app, since the web player in a browser shows up under the browser's name.
 - **The equalizer doesn't move.** Check that `process_name` in `config.toml` matches the players' process name in Task Manager (Details tab). Restart the app after the player updates.
 - **The port is already in use.** Another program is using port 5000. Change the `port` in `config.toml`.
-- **A new theme isn't showing.** Refresh the Theme Gallery page. Check the file name uses only letters, numbers, `-` and `_`, and that Windows isn't hiding the extension and naming it `mytheme.css.txt`.
+- **A new theme isn't showing.** Refresh the Theme Gallery page. Check the file name uses only letters, numbers, `-` and `_`, and that Windows isn't hiding the extension and naming it `mytheme.css.txt`. Skipped themes are listed in `nowplaying.log`.
 - **The overlay doesn't load from another PC or phone.** Set `bind_address = "0.0.0.0"` in `config.toml`, restart the app, and use the PC's network address (see Network Note) instead of `localhost`.
 - **Something else is wrong.** Look at `nowplaying.log` next to the exe.
 

@@ -1,4 +1,4 @@
-use crate::{audio, config, favorites, media};
+use crate::{audio, config, favorites, media, themes};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -64,34 +64,6 @@ fn overlay_url(theme: &str) -> String {
     }
 }
 
-// Lists the .css theme names in a folder, sorted
-fn list_themes(dir: &str) -> Vec<String> {
-    let mut names: Vec<String> = std::fs::read_dir(dir)
-        .into_iter()
-        .flatten()
-        .flatten()
-        .filter_map(|e| {
-            let p = e.path();
-            if p.extension()?.to_str()? == "css" {
-                Some(p.file_stem()?.to_str()?.to_string())
-            } else {
-                None
-            }
-        })
-        .collect();
-    names.sort();
-    names
-}
-
-// Every theme that is installed (all four folders)
-fn installed_themes() -> Vec<String> {
-    let mut all = list_themes("static/themes/examples");
-    all.extend(list_themes("static/themes/game-inspired"));
-    all.extend(list_themes("static/themes/styles"));
-    all.extend(list_themes("static/themes/custom"));
-    all
-}
-
 // Adds one item per theme to a submenu
 fn fill_submenu(
     sub: &Submenu,
@@ -121,7 +93,7 @@ fn rebuild_favorites(
     actions: &Arc<Mutex<HashMap<MenuId, Action>>>,
     items: &mut Vec<MenuItem>,
 ) {
-    let installed = installed_themes();
+    let installed = themes::installed();
     let names: Vec<String> = favorites::get()
         .into_iter()
         .filter(|n| installed.contains(n))

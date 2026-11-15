@@ -6,13 +6,22 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 // Other source files
-mod audio; // audio capture + FFT for the EQ
-mod config; // reads config.toml
+// audio capture + FFT for the EQ
+mod audio;
+// reads config.toml
+mod config;
+// the list of favorite themes
 mod favorites;
-mod logging; // handles logging to nowplaying.log
-mod media; // Apple music song info
-mod server; // handles the HTTP server and routes
-mod tray; // handles the system tray icon and menu // handles the list of favorite themes
+// handles logging to nowplaying.log
+mod logging;
+// song info from the media players (Apple Music, Spotify)
+mod media;
+// handles the HTTP server and routes
+mod server;
+// theme names and listing the theme folders
+mod themes;
+// handles the system tray icon and menu
+mod tray;
 
 // Lets the other files keep calling crate::log(...)
 pub use logging::log;

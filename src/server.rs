@@ -1,4 +1,4 @@
-use crate::{audio, config, favorites, log, media};
+use crate::{audio, config, favorites, log, media, themes};
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::extract::{Path, Query, State};
 use axum::http::{HeaderValue, header};
@@ -62,32 +62,12 @@ struct Themes {
     custom: Vec<String>,
 }
 
-// Names of the .css files in one theme folder, sorted
-fn list_css(folder: &str) -> Vec<String> {
-    let mut names: Vec<String> = std::fs::read_dir(format!("static/themes/{folder}"))
-        .map(|dir| {
-            dir.filter_map(|e| e.ok())
-                .filter_map(|e| {
-                    let path = e.path();
-                    if path.extension()?.to_str()? == "css" {
-                        Some(path.file_stem()?.to_string_lossy().into_owned())
-                    } else {
-                        None
-                    }
-                })
-                .collect()
-        })
-        .unwrap_or_default();
-    names.sort();
-    names
-}
-
 async fn themes() -> Json<Themes> {
     axum::Json(Themes {
-        examples: list_css("examples"),
-        styles: list_css("styles"),
-        game_inspired: list_css("game-inspired"),
-        custom: list_css("custom"),
+        examples: themes::list("examples"),
+        styles: themes::list("styles"),
+        game_inspired: themes::list("game-inspired"),
+        custom: themes::list("custom"),
     })
 }
 

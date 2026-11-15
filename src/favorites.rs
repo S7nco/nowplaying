@@ -45,11 +45,7 @@ pub fn is_saved() -> bool {
 pub fn set(names: Vec<String>) -> Vec<String> {
     let mut clean: Vec<String> = Vec::new();
     for name in names {
-        let ok = !name.is_empty()
-            && name.len() <= 64
-            && name
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
+        let ok = crate::themes::valid_name(&name);
         if ok && !clean.contains(&name) {
             clean.push(name);
         }
