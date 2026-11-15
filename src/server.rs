@@ -270,7 +270,7 @@ pub async fn run() {
             HeaderValue::from_static("no-cache"),
         ));
 
-    // .unwrap() is used to handle any errors that may occur when starting the server. If an error occurs, the program will panic and print the error message.
+    // if the port can't be bound, log the error and exit
     let port = config::get().port;
     let listener = match tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await {
         Ok(l) => l,
@@ -280,5 +280,8 @@ pub async fn run() {
         }
     };
     log(&format!("Server running on http://localhost:{port}"));
-    axum::serve(listener, app).await.unwrap();
+    if let Err(e) = axum::serve(listener, app).await {
+        log(&format!("Server stopped: {e}"));
+        std::process::exit(1);
+    }
 }

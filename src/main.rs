@@ -81,11 +81,18 @@ fn main() {
 
     // the web sever and audio run on their own thead
     std::thread::spawn(|| {
-        tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .unwrap()
-            .block_on(server::run());
+        let result = std::panic::catch_unwind(|| {
+            tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap()
+                .block_on(server::run());
+        });
+        if result.is_err() {
+            log("Server thread crashed, exiting");
+            std::process::exit(1);
+        }
+        
     });
 
     // the tray icon runs on the main thread and never returns
