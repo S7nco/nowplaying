@@ -67,6 +67,17 @@ pub fn read_track() -> TrackInfo {
     }
 }
 
+// The track we last logged an artwork problem for, so each track logs it only once
+static LAST_ART_LOG: Mutex<Option<(String, String)>> = Mutex::new(None);
+
+fn log_artwork_once(key: &(String, String), msg: String) {
+    let mut last = LAST_ART_LOG.lock().unwrap();
+    if last.as_ref() != Some(key) {
+        *last = Some(key.clone());
+        crate::log(&msg);
+    }
+}
+
 // Result<..> means "this can fail". The ? after a call means "if it failed, stop and return the error".
 fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
     let manager = manager()?;
@@ -141,14 +152,14 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
                         *last_track = Some(key);
                     }
                 }
-                Ok(Some(bytes)) => crate::log(&format!(
+                Ok(Some(bytes)) => log_artwork_once(&key, format!(
                     "Artwork: {} bytes for {title:?} isn't an image yet, retrying",
                     bytes.len()
                 )),
-                Ok(None) => crate::log(&format!("Artwork: empty thumbnail for {title:?}")),
-                Err(e) => crate::log(&format!("Artwork: read failed for {title:?}: {e}")),
+                Ok(None) => log_artwork_once(&key, format!("Artwork: empty thumbnail for {title:?}")),
+                Err(e) => log_artwork_once(&key, format!("Artwork: read failed for {title:?}: {e}")),
             },
-            Err(e) => crate::log(&format!("Artwork: no thumbnail for {title:?}: {e}")),
+            Err(e) => log_artwork_once(&key, format!("Artwork: no thumbnail for {title:?}: {e}")),
         }
     }
 
