@@ -1,6 +1,6 @@
 /* Neon sign: white-hot text with a colored glow, glowing outline */
 :root {
-    --spectrun: 1;
+    --spectrum: 1;
 
     --brand: #ff3df2;
     --brand-2: #22e5ff;
