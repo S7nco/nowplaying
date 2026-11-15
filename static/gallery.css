@@ -25,6 +25,8 @@
         .tags { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 12px 10px; }
         .tags:empty { display: none; }
         .tag { font-size: 11px; line-height: 1; padding: 4px 8px; border-radius: 10px; background: #232838; color: #9aa3b8; }
+        .tag.size:empty { display: none }
+        .tag.size { font-variant-numeric: tabular-nums; font-weight: 600; }
         .action { display: flex; align-items: center; gap: 6px; }
         .fav { background: none; border: 0; padding: 0 4px; font-size: 18px; line-height: 1; color: #6b7389; cursor: pointer; }
         .fav:hover, .fav.on { color: #f5c542; }
@@ -32,6 +34,7 @@
         .sw { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 2px solid #3a4052; cursor: pointer; }
         .sw:hover { border-color: #6b7389; }
         .sw.on { border-color: #b9cdf5; box-shadow: 0 0 0 2px #25304a; }
+
 #playToggle {
         margin-left: 10px;
 }

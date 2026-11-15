@@ -220,12 +220,8 @@ function showTags(frame, view) {
     if(shown("line")) tags.push("one line");
 
     const box = view.parentElement.querySelector(".tags");
-    box.replaceChildren(...tags.map(t => {
-        const chip = document.createElement("span");
-        chip.className = "tag";
-        chip.textContent = t;
-        return chip;
-    }));
+    box.replaceChildren(box.querySelector(".size"), ...tags.map(t => 
+        el("span", { className: "tag" }, t)));
 }
 
 // Measures the overlay and scales the frame so the overlay fits the card, centered
@@ -235,6 +231,13 @@ function layout(view) {
     if (!overlay) return;
     const r = overlay.getBoundingClientRect();
     if (!r.width || !r.height) return;
+
+    // Size for the OBS browser source: the overlay plus the page's padding (--offset) on both sides
+    const obsW = Math.ceil(r.width + r.left * 2);
+    const obsH = Math.ceil(r.height + r.top * 2);
+    view.dataset.obsSize = `${obsW}×${obsH}`;   // the enlarged view reads this
+    const sizeTag = view.parentElement.querySelector(".size");
+    if (sizeTag) sizeTag.textContent = `${obsW}×${obsH}`;
 
     const cardW = view.clientWidth;
     const scale = Math.min((cardW - PAD * 2) / r.width, (MAX_H - PAD * 2) / r.height);
@@ -305,6 +308,8 @@ function makeCard(name) {
 
     const label = name.replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
+    const size = el("span", { className: "tag size", title: "Width × height for the OBS browser source" });
+
     const card = el("div", { className: "card" },
         view,
         el("div", { className: "row" },
@@ -315,7 +320,7 @@ function makeCard(name) {
                 copyBtn,
             ),
         ),
-        el("div", { className: "tags" }),
+        el("div", { className: "tags" }, size),
     );
     card.dataset.name = name;
 
