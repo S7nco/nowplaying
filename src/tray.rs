@@ -1,9 +1,9 @@
 use crate::{audio, config, favorites, media, themes};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tray_icon::{
-    Icon, TrayIconBuilder,
+    Icon, MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent,
     menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem, Submenu},
 };
 use windows::Win32::UI::WindowsAndMessaging::{
@@ -199,15 +199,13 @@ pub fn run(shared: Status) {
     let mut seen_version = favorites::version();
     rebuild_favorites(&open_menu, &copy_menu, &actions, &mut fav_items);
 
-    // Opens the theme gallary page in the browser
+    // Opens the theme gallery page in the browser
+    let gallery_url = format!("http://localhost:{}/gallery.html", config::get().port);
     let gallery = MenuItem::new("Theme Gallery", true, None);
-    actions.lock().unwrap().insert(
-        gallery.id().clone(),
-        Action::Open(format!(
-            "http://localhost:{}/gallery.html",
-            config::get().port
-        )),
-    );
+    actions
+        .lock()
+        .unwrap()
+        .insert(gallery.id().clone(), Action::Open(gallery_url.clone()));
 
     let restart = MenuItem::new("Restart", true, None);
     actions
@@ -229,7 +227,9 @@ pub fn run(shared: Status) {
     );
 
     // Opens nowplaying.log (the app runs from its own folder, so the log is there)
-    let log_path = std::env::current_dir().unwrap_or_default().join("nowplaying.log");
+    let log_path = std::env::current_dir()
+        .unwrap_or_default()
+        .join("nowplaying.log");
     let open_log = MenuItem::new("Open Log", true, None);
     actions.lock().unwrap().insert(
         open_log.id().clone(),
@@ -268,6 +268,25 @@ pub fn run(shared: Status) {
             }
             Some(Action::Quit) => std::process::exit(0),
             None => {}
+        }
+    }));
+
+    // Left-click on the icon opens the Theme Gallery (right-click shows the menu)
+    // A double-click arrives as two clicks, so ignore one within a second of the last.
+    let last_open: Mutex<Option<Instant>> = Mutex::new(None);
+    TrayIconEvent::set_event_handler(Some(move |event: TrayIconEvent| {
+        if let TrayIconEvent::Click {
+            button: MouseButton::Left,
+            button_state: MouseButtonState::Up,
+            ..
+        } = event
+        {
+            let mut last = last_open.lock().unwrap();
+            if last.is_some_and(|t| t.elapsed() < Duration::from_secs(1)) {
+                return;
+            }
+            *last = Some(Instant::now());
+            let _ = open::that(&gallery_url);
         }
     }));
 
