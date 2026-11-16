@@ -221,12 +221,29 @@ pub fn run(shared: Status) {
         .unwrap()
         .insert(quit.id().clone(), Action::Quit);
 
+    // the app's version (from Cargo.toml at build time); clicking it opens the releases page
+    let version = MenuItem::new(format!("Version {}", env!("CARGO_PKG_VERSION")), true, None);
+    actions.lock().unwrap().insert(
+        version.id().clone(),
+        Action::Open(format!("{}/releases", env!("CARGO_PKG_REPOSITORY"))),
+    );
+
+    // Opens nowplaying.log (the app runs from its own folder, so the log is there)
+    let log_path = std::env::current_dir().unwrap_or_default().join("nowplaying.log");
+    let open_log = MenuItem::new("Open Log", true, None);
+    actions.lock().unwrap().insert(
+        open_log.id().clone(),
+        Action::Open(log_path.to_string_lossy().into_owned()),
+    );
+
     menu.append(&status_item).unwrap();
     menu.append(&PredefinedMenuItem::separator()).unwrap();
     menu.append(&gallery).unwrap();
     menu.append(&open_menu).unwrap();
     menu.append(&copy_menu).unwrap();
     menu.append(&PredefinedMenuItem::separator()).unwrap();
+    menu.append(&open_log).unwrap();
+    menu.append(&version).unwrap();
     menu.append(&restart).unwrap();
     menu.append(&quit).unwrap();
 
