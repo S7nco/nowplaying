@@ -23,6 +23,12 @@ jobs:
           $v = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
           if ("v$v" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} doesn't match Cargo.toml version $v" }
 
+      - name: Check the release notes exist
+        shell: pwsh
+        run: |
+          $notes = "release-notes/${{ github.ref_name }}.md"
+          if (-not (Test-Path $notes)) { throw "Missing $notes. Write the release notes and commit them before tagging." }
+
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
@@ -39,4 +45,5 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           files: dist/NowPlaying-${{ github.ref_name }}.zip
+          body_path: release-notes/${{ github.ref_name }}.md
           generate_release_notes: true
