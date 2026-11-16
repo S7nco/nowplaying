@@ -41,30 +41,38 @@ pub fn is_saved() -> bool {
     SAVED.load(Ordering::Relaxed)
 }
 
-/// Replaces the list and saves it. Names are cleaned: letters, numbers, _ and - only, no repeats
-pub fn set(names: Vec<String>) -> Vec<String> {
+/// Cleans the names (letters, numbers, _ and - only, no repeats), saves them to favorites.json
+/// and makes them the current list. The caller holds the lock, so nothing can change in between.
+fn store(current: &mut Vec<String>, names: Vec<String>) -> Vec<String> {
     let mut clean: Vec<String> = Vec::new();
     for name in names {
-        let ok = crate::themes::valid_name(&name);
-        if ok && !clean.contains(&name) {
+        if crate::themes::valid_name(&name) && !clean.contains(&name) {
             clean.push(name);
         }
     }
     if let Ok(text) = serde_json::to_string_pretty(&clean) {
         let _ = std::fs::write(FILE, text);
     }
-    *list().lock().unwrap() = clean.clone();
+    *current = clean.clone();
     SAVED.store(true, Ordering::Relaxed);
     VERSION.fetch_add(1, Ordering::Relaxed);
     clean
 }
 
+/// Replaces the whole list and saves it
+pub fn set(names: Vec<String>) -> Vec<String> {
+    let mut current = list().lock().unwrap();
+    store(&mut current, names)
+}
+
 /// Adds or removes a single theme, so two gallery tabs can't overwrite each other's changes
+/// Reading the list and saving the change happen under one lock.
 pub fn set_one(name: &str, on: bool) -> Vec<String> {
-    let mut names = get();
+    let mut current = list().lock().unwrap();
+    let mut names = current.clone();
     names.retain(|n| n != name);
     if on {
         names.push(name.to_string());
     }
-    set(names)
+    store(&mut current, names)
 }
