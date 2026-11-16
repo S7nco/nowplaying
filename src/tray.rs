@@ -19,6 +19,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 enum Action {
     Open(String),
     Copy(String),
+    CopyNetwork(String),    // a theme name: the URL is built with the current network address when clicked
     Restart,
     Quit,
 }
@@ -55,12 +56,30 @@ fn display_name(name: &str) -> String {
 }
 
 /// Builds the overlay address for a theme, using the port from config.toml
-fn overlay_url(theme: &str) -> String {
+fn overlay_url(host: &str, theme: &str) -> String {
     let port = config::get().port;
     if theme == "default" {
-        format!("http://localhost:{port}/overlay.html")
+        format!("http://{host}:{port}/overlay.html")
     } else {
-        format!("http://localhost:{port}/overlay.html?theme={theme}")
+        format!("http://{host}:{port}/overlay.html?theme={theme}")
+    }
+}
+
+/// This PC's address on the local network, e.g. 192.168.1.20.
+/// Asks Windows which local address it would use to reach an outside address.
+/// A UDP "connect" only picks a route; nothing is sent.
+fn local_ip() -> Option<std::net::IpAddr> {
+    let socket = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
+    socket.connect("8.8.8.8:80").ok()?;
+    Some(socket.local_addr().ok()?.ip())
+}
+
+/// The address other devices use to reach the overlay, or None if only this PC can connect
+fn network_host() -> Option<String> {
+    match config::get().bind_address.trim() {
+        "127.0.0.1" | "localhost" | "::1" => None,                  // This PC only
+        "0.0.0.0" => local_ip().map(|ip| ip.to_string()),   // Every network: use this PC's address
+        other => Some(other.to_string()),                     // A specific address was set: use it
     }
 }
 
@@ -68,7 +87,7 @@ fn overlay_url(theme: &str) -> String {
 fn fill_submenu(
     sub: &Submenu,
     names: &[String],
-    action: fn(String) -> Action,
+    action: fn(&str) -> Action,
     actions: &mut HashMap<MenuId, Action>,
     items: &mut Vec<MenuItem>,
 ) {
@@ -80,7 +99,7 @@ fn fill_submenu(
     for name in names {
         let item = MenuItem::new(display_name(&name), true, None);
         sub.append(&item).unwrap();
-        actions.insert(item.id().clone(), action(overlay_url(&name)));
+        actions.insert(item.id().clone(), action(name));
         items.push(item);
     }
 }
@@ -90,6 +109,7 @@ fn fill_submenu(
 fn rebuild_favorites(
     open_menu: &Submenu,
     copy_menu: &Submenu,
+    net_menu: Option<&Submenu>,         // only when other devices can connect
     actions: &Arc<Mutex<HashMap<MenuId, Action>>>,
     items: &mut Vec<MenuItem>,
 ) {
@@ -108,8 +128,15 @@ fn rebuild_favorites(
     while open_menu.remove_at(0).is_some() {}
     while copy_menu.remove_at(0).is_some() {}
 
-    fill_submenu(open_menu, &names, Action::Open, &mut map, items);
-    fill_submenu(copy_menu, &names, Action::Copy, &mut map, items);
+    if let Some(net) = net_menu {
+        while net.remove_at(0).is_some() {}
+    }
+
+    fill_submenu(open_menu, &names, |n| Action::Open(overlay_url("localhost", n)), &mut map, items);
+    fill_submenu(copy_menu, &names, |n| Action::Copy(overlay_url("localhost", n)), &mut map, items);
+    if let Some(net) = net_menu {
+        fill_submenu(net, &names, |n| Action::CopyNetwork(n.to_string()), &mut map, items);
+    }
 }
 
 /// Makes the tray menu follow Windows' dark mode setting.
@@ -195,9 +222,11 @@ pub fn run(shared: Status) {
     // the two favorites submenus: filled from the favorites list (picked in the gallery)
     let open_menu = Submenu::new("Open in Browser", true);
     let copy_menu = Submenu::new("Copy URL", true);
+    // Copy Network URL: only when other devices can connect (bind_address isn't this-PC only)
+    let net_menu = network_host().map(|_| Submenu::new("Copy Network URL", true));
     let mut fav_items: Vec<MenuItem> = Vec::new();
     let mut seen_version = favorites::version();
-    rebuild_favorites(&open_menu, &copy_menu, &actions, &mut fav_items);
+    rebuild_favorites(&open_menu, &copy_menu, net_menu.as_ref(), &actions, &mut fav_items);
 
     // Opens the theme gallery page in the browser
     let gallery_url = format!("http://localhost:{}/gallery.html", config::get().port);
@@ -241,6 +270,9 @@ pub fn run(shared: Status) {
     menu.append(&gallery).unwrap();
     menu.append(&open_menu).unwrap();
     menu.append(&copy_menu).unwrap();
+    if let Some(net) = &net_menu {
+        menu.append(net).unwrap();
+    }
     menu.append(&PredefinedMenuItem::separator()).unwrap();
     menu.append(&open_log).unwrap();
     menu.append(&version).unwrap();
@@ -257,6 +289,14 @@ pub fn run(shared: Status) {
             Some(Action::Copy(url)) => {
                 if let Ok(mut clipboard) = arboard::Clipboard::new() {
                     let _ = clipboard.set_text(url.clone());
+                }
+            }
+            Some(Action::CopyNetwork(theme)) => {
+                // look the address up now, in case it changed since the app started
+                if let Some(host) = network_host() {
+                    if let Ok(mut clipboard) = arboard::Clipboard::new() {
+                        let _ = clipboard.set_text(overlay_url(&host, &theme));
+                    }
                 }
             }
             Some(Action::Restart) => {
@@ -310,7 +350,7 @@ pub fn run(shared: Status) {
                 let version = favorites::version();
                 if version != seen_version {
                     seen_version = version;
-                    rebuild_favorites(&open_menu, &copy_menu, &actions, &mut fav_items);
+                    rebuild_favorites(&open_menu, &copy_menu, net_menu.as_ref(), &actions, &mut fav_items);
                 }
 
                 let current = shared.lock().unwrap().clone();

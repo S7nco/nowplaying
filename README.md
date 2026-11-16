@@ -82,6 +82,7 @@ Left-click the tray icon to open the Theme Gallery. Right-click it for the menu:
 | Theme Gallery | Opens the Theme Gallery in your browser |
 | Open in Browser | Opens the overlay in one of your favorite themes |
 | Copy URL | Copies the overlay address for one of your favorite themes |
+| Copy Network URL | Only when `bind_address` lets other devices connect. Copies the overlay address with this PC's network address, for OBS on another computer | 
 | Open Log | Opens `nowplaying.log`, which helps when something isn't working |
 | Version | Shows which version you're running. Click it to see the releases page | 
 | Restart | Restarts the app, so `config.toml` changes are picked up. |
@@ -179,7 +180,7 @@ By default the overlay server only accepts connections from the same PC (`bind_a
 bind_address = "0.0.0.0"
 ```
 
-Then use your PC's network address instead of `localhost`, for example `http://192.168.1.21:5000/overlay.html`. Run `ipconfig` in the terminal and look for **IPv4 Address** to find it. Windows may ask to allow network access the first time: allow **Private networks**. The app does not send any data to the internet.
+Then right-click the tray icon and use **Copy Network URL**: it copies the overlay address with your PC's network address instead of `localhost`, ready to paste into OBS on another computer. To type it yourself, run `ipconfig` in the terminal and look for **IPv4 Address** to find it, e.g. `http://192.168.1.21:5000/overlay.html`. Windows may ask to allow network access the first time: allow **Private networks**. The app does not send any data to the internet.
 
 ## Building from Source
 
