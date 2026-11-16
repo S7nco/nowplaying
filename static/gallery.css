@@ -1,78 +1,206 @@
-:root { color-scheme: dark; }
-        * { box-sizing: border-box; }
-        body { margin: 0; padding: 24px; background: #12141a; color: #e6e8ee; font: 15px/1.5 system-ui, "Segoe UI", sans-serif; }
-        h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
-        .sub { margin: 0 0 18px; color: #8d93a3; font-size: 13px; }
-        .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
-        input[type=search] { flex: 1; min-width: 180px; padding: 8px 12px; border-radius: 8px; border: 1px solid #2a2e3a; background: #1a1d26; color: inherit; font: inherit; }
-        .chip { padding: 6px 14px; border-radius: 8px; border: 1px solid #2a2e3a; background: transparent; color: inherit; font: inherit; font-size: 13px; cursor: pointer; }
-        .chip.on { background: #25304a; border-color: #4d6aa8; color: #b9cdf5; }
-        .count { color: #8d93a3; font-size: 13px; margin: 6px 0 4px; }
-        h2 { margin: 26px 0 10px; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #8d93a3; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; align-items: start; }
-        .card { background: #1a1d26; border: 1px solid #2a2e3a; border-radius: 12px; overflow: hidden; }
-        .view { position: relative; width: 100%; height: 120px; background: #0c0e13; overflow: hidden; }
-        .view iframe { position: absolute; left: 0; top: 0; width: 900px; height: 700px; border: 0; transform-origin: 0 0; pointer-events: none; color-scheme: light; }
-        .view .ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #4a5060; font-size: 12px; }
-        .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; }
-        .name { font-weight: 600; font-size: 14px; word-break: break-word; }
-        .open { text-decoration: none; display: inline-block; font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 6px; border: 1px solid #3a4052; background: transparent; color: inherit; }
-        button.copy { padding: 5px 10px; border-radius: 6px; border: 1px solid #3a4052; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
-        .open:hover { background: #232838; }
-        button.copy:hover { background: #232838; }
-        button.copy.done { border-color: #3f8f5f; color: #8fdcaa; }
-        .empty { color: #6a7080; font-size: 13px; padding: 8px 0; }
-        .tags { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 12px 10px; }
-        .tags:empty { display: none; }
-        .tag { font-size: 11px; line-height: 1; padding: 4px 8px; border-radius: 10px; background: #232838; color: #9aa3b8; }
-        .tag.size:empty { display: none }
-        .tag.size { font-variant-numeric: tabular-nums; font-weight: 600; }
-        .action { display: flex; align-items: center; gap: 6px; }
-        .fav { background: none; border: 0; padding: 0 4px; font-size: 18px; line-height: 1; color: #6b7389; cursor: pointer; }
-        .fav:hover, .fav.on { color: #f5c542; }
-        .swatches { display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; padding-left: 14px; border-left: 1px solid #2a2e3a; }
-        .sw { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 2px solid #3a4052; cursor: pointer; }
-        .sw:hover { border-color: #6b7389; }
-        .sw.on { border-color: #b9cdf5; box-shadow: 0 0 0 2px #25304a; }
-        .view { cursor: pointer; }
-        dialog.big .view { cursor: default; }
-        dialog.big { 
-                padding: 0;             /* keep at 0: the click-outside check relies on it */
-                width: min(960px, calc(100vw - 32px));
-                max-height: calc(100vh - 32px);
-                border: 1px solid #2a3040;
-                border-radius: 12px;
-                background: #151821;
-                color: inherit;
-        }
-        dialog.big::backdrop { background: rgba(0, 0, 0, 0.7); }
-        .big-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
-        .big-head h2 { margin: 0; font-size: 18px; }
-        .big-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 16px 16px; }
-        .big-url { flex: 1; min-width: 220px; padding: 6px 10px; border-radius: 6px; border: 1px solid #2a2e3a; background: #1a1d26; color: inherit; font: inherit; font-size: 13px; }
-        .big-foot .swatches { margin-left: auto; }
-        dialog.big .tags { padding: 8px 16px; }
-        .close { background: none; border: 0; padding: 0 4px; font-size: 24px; line-height: 1; color: #9aa3b8; cursor: pointer; }
-        .close:hover { color: #fff; }
-        .scale { display: inline-flex; gap: 4px; }
+/* Theme gallery page styles (gallery.html) */
 
-#playToggle {
-        margin-left: 10px;
+/* ============================================================
+   Base: colors, page, headings
+   ============================================================ */
+
+:root {
+    color-scheme: dark;
+
+    --bg: #12141a;              /* page */
+    --panel: #1a1d26;           /* cards, inputs */
+    --line: #2a2e3a;            /* borders */
+    --line-strong: #3a4052;     /* button borders, hovered card */
+    --hover: #232838;           /* button hover, tags */
+    --text: #e6e8ee;
+    --muted: #8d93a3;           /* secondary text */
+    --subtle: #9aa3b8;          /* tag text, close button */
+    --accent: #b9cdf5;          /* selected chip / swatch */
+    --accent-bg: #25304a;
+    --accent-line: #4d6aa8;
+    --star: #f5c542;
 }
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 system-ui, "Segoe UI", sans-serif;
+}
+
+h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
+h2 { margin: 26px 0 10px; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.sub { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
+.count { margin: 6px 0 4px; color: var(--muted); font-size: 13px; }
+.empty { padding: 8px 0; color: #6a7080; font-size: 13px; }
+
+/* ============================================================
+   Toolbar: search, filter chips, play/pause, background swatches
+   ============================================================ */
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+
+input[type=search] {
+    flex: 1;
+    min-width: 180px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: inherit;
+    font: inherit;
+}
+
+.chip {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+.chip.on { background: var(--accent-bg); border-color: var(--accent-line); color: var(--accent); }
+
+#playToggle { margin-left: 10px; }
 #playToggle.paused { border-color: #4a6fb5; color: #9db8f0; }
 
-.sw[data-bg="dark"]     { background: #0c0e13; }
-.sw[data-bg="black"]   { background: #000; }
-.sw[data-bg="white"]   { background: #fff; }
-.sw[data-bg="green"]   { background: #00b140; }
-.sw[data-bg="checker"] {
-        background: repeating-conic-gradient(#3a3d45 0% 25%, #2a2c33 0% 50%) 50% / 8px 8px; 
+.swatches { display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; padding-left: 14px; border-left: 1px solid var(--line); }
+.sw { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 2px solid var(--line-strong); cursor: pointer; }
+.sw:hover { border-color: #6b7389; }
+.sw.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-bg); }
+
+/* ============================================================
+   Cards: grid, preview, name row, tags, star
+   ============================================================ */
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; align-items: start; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+
+/* The preview: a scaled iframe of the overlay. Its background comes from the swatches (see the end) */
+.view {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    background: var(--preview-bg, #0c0e13);
+    overflow: hidden;
+    cursor: pointer;
+}
+.view iframe { position: absolute; left: 0; top: 0; width: 900px; height: 700px; border: 0; transform-origin: 0 0; pointer-events: none; color-scheme: light; }
+.view .ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #4a5060; font-size: 12px; }
+
+.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; }
+.name { font-weight: 600; font-size: 14px; word-break: break-word; }
+.action { display: flex; align-items: center; gap: 6px; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 12px 10px; }
+.tags:empty { display: none; }
+.tag { font-size: 11px; line-height: 1; padding: 4px 8px; border-radius: 10px; background: var(--hover); color: var(--subtle); }
+.tag.size { font-variant-numeric: tabular-nums; font-weight: 600; }
+.tag.size:empty { display: none; }
+
+.fav { padding: 0 4px; border: 0; background: none; font-size: 18px; line-height: 1; color: #6b7389; cursor: pointer; }
+.fav:hover, .fav.on { color: var(--star); }
+
+/* ============================================================
+   Buttons: Open and Copy URL (on cards and in the enlarged view)
+   ============================================================ */
+
+.open, .copy {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line-strong);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+}
+.open { display: inline-block; font-size: 13px; text-decoration: none; }
+.copy { font-size: 12px; white-space: nowrap; cursor: pointer; }
+.open:hover, .copy:hover { background: var(--hover); }
+.copy.done { border-color: #3f8f5f; color: #8fdcaa; }
+
+/* ============================================================
+   Card hover: lift the card, and hint that the preview opens bigger
+   ============================================================ */
+
+.card { transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
+.card:hover { transform: translateY(-2px); border-color: var(--line-strong); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
+
+.grid .view::after {
+    content: "⤢ Enlarge";
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    padding: 3px 7px;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #e6e9f0;
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+}
+.grid .view:hover::after { opacity: 1; }
+
+/* People who turn off animations in Windows get no movement */
+@media (prefers-reduced-motion: reduce) {
+    .card, .grid .view::after { transition: none; }
+    .card:hover { transform: none; }
 }
 
-body[data-bg="dark"]    .view { background: #0c0e13; }
-body[data-bg="black"]   .view { background: #000; }
-body[data-bg="white"]   .view { background: #fff; }
-body[data-bg="green"]   .view { background: #00b140; }
-body[data-bg="checker"] .view {
-        background: repeating-conic-gradient(#3a3d45 0% 25%, #2a2c33 0% 50%) 50% / 8px 8px; 
+/* ============================================================
+   Enlarged view: the dialog opened by clicking a preview
+   ============================================================ */
+
+dialog.big {
+    padding: 0;                 /* keep at 0: the click-outside check relies on it */
+    width: min(960px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    border: 1px solid #2a3040;
+    border-radius: 12px;
+    background: #151821;
+    color: inherit;
 }
+dialog.big::backdrop { background: rgba(0, 0, 0, 0.7); }
+dialog.big .view { cursor: default; }
+dialog.big .tags { padding: 8px 16px; }
+
+.big-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+.big-head h2 { margin: 0; font-size: 18px; }
+
+.close { padding: 0 4px; border: 0; background: none; font-size: 24px; line-height: 1; color: var(--subtle); cursor: pointer; }
+.close:hover { color: #fff; }
+
+.big-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 16px 16px; }
+.big-foot .swatches { margin-left: auto; }
+.big-url {
+    flex: 1;
+    min-width: 220px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+}
+.scale { display: inline-flex; gap: 4px; }
+
+/* ============================================================
+   Preview backgrounds: each one is set once, and used by both
+   its swatch and the previews (body[data-bg] is the current choice)
+   ============================================================ */
+
+.sw[data-bg="dark"],    body[data-bg="dark"]    { --preview-bg: #0c0e13; }
+.sw[data-bg="black"],   body[data-bg="black"]   { --preview-bg: #000; }
+.sw[data-bg="white"],   body[data-bg="white"]   { --preview-bg: #fff; }
+.sw[data-bg="green"],   body[data-bg="green"]   { --preview-bg: #00b140; }
+.sw[data-bg="checker"], body[data-bg="checker"] {
+    --preview-bg: repeating-conic-gradient(#3a3d45 0% 25%, #2a2c33 0% 50%) 50% / 8px 8px;
+}
+.sw { background: var(--preview-bg); }
