@@ -205,9 +205,15 @@ function showTags(frame, view) {
     if (!frame.isConnected) return;
     const win = frame.contentWindow;
     const doc = frame.contentDocument;
+    // Does the theme show this element? (hidden elements are still in the DOM, but not visible)
     const shown = id => {
         const el = doc.getElementById(id);
-        return !!el && win.getComputedStyle(el).display !== "none";
+        if (!el) return false;
+        const wasHidden = el.hidden;
+        el.hidden = false;
+        const visible = win.getComputedStyle(el).display !== "none";
+        el.hidden = wasHidden;
+        return visible;
     };
     const setting = name => win.getComputedStyle(doc.documentElement).getPropertyValue(name).trim();
 
