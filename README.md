@@ -15,7 +15,7 @@ serves the overlay as a local web page, and ships with themes, an audio equalize
 - Works with the Apple Music app for Windows and the Spotify desktop app, and follows whichever one is playing
 - Live equalizer and music-reactive glows, driven by the player's audio
 - Popup mode: appears when the song changes, then fades out
-- A Theme Gallery to preview every theme, with search, filters, favorites and test backgrounds
+- A Theme Gallery to preview every theme, with search, filters, favorites and test backgrounds. Click a theme to see it bigger, with the exact OBS size
 - Themes are plain CSS files. Examples are included, and you can make your own ([how to make a theme](THEMES.md))
 - Runs quietly in the system tray, with a status line showing the current song
 - Written in Rust. Uses a few MB of memory and almost no CPU
@@ -35,11 +35,11 @@ serves the overlay as a local web page, and ships with themes, an audio equalize
    - URL: `http://localhost:5000/overlay.html`
    - Width: 620, Height: 180
 
-<img src="docs/overlay-in-obs.png" alt="Overlay in an OBS scene" widht="800">
+<img src="docs/overlay-in-obs.png" alt="Overlay in an OBS scene" width="800">
 
 To try another theme, change the address, for example, `http://localhost:5000/overlay.html?theme=eq`. You can also right-click the tray icon and use **Open in Browser** or **Copy URL**.
 
-Windows may warn you ("Windows protected your PC") because the app is not code-signed. Choose **More info > Run anyway**. The full source code is in this repository.
+Windows may warn you ("Windows protected your PC") because the app is not code-signed. Choose **More info > Run anyway**. To avoid the warning, right-click the zip before unzipping it, choose **Properties**, tick **Unblock**, and click **OK**. The full source is in this repository. 
 
 To start the app with Windows, press Win+R, type `shell:startup`, and put a shortcut to `nowplaying.exe` in the folder that opens.
 
@@ -51,32 +51,39 @@ If you unzip into a new folder instead, copy `config.toml`, `favorites.json` and
 
 ### Spotify
 
-In Spotify, open Settings and turn on **Show desktop overlay when using media keys**. Spotify only tells Windows what it is playing when this is on. Spotify does not share the album name with Windows, so themes show no album line for Spotify songs.
+In Spotify, open Settings and turn on **Show desktop overlay when using media keys**. Spotify only tells Windows what it is playing when this is on.
 
 ## Theme Gallery
 
-Open `http://localhost:5000/gallery.html` (or choose **Theme Gallery** in the tray menu) to see every theme running.
+Open `http://localhost:5000/gallery.html`, or left-click the tray icon, to see every theme running.
 
 - Search and filter themes by group
 - Click **Open** to open a theme, or **Copy URL** to paste it into OBS
+- Click a preview to enlarge it. The enlarged view shows the theme's OBS browser source size, its URL, and a scale control (1x, 1.5x, 2x) that updates both. Popup themes get a **Replay popup** button
+- Each card shows the theme's OBS size (width x height), including any room it needs for glows
+- Link straight to a theme with `gallery.html#name`, e.g. `http://localhost:5000/gallery.html#neon`
 - Click the star on a theme to add it to your **Favorites**, which appear at the top of the page
 - Use the colored dots to preview themes on a dark, black, white, green, or checkered background (useful for transparent themes)
 - Use **Playing / Paused** to freeze the previews
 
 Your favorites also appear in the tray menu, under **Open in Browser** and **Copy URL**. They are saved in `favorites.json` next to the app. Until you star something, the tray uses the `tray_themes` list from `config.toml`.
 
+<img src="docs/enlarged-view.png" alt="Enlarged View" width="800">
+
 ## The tray menu
 
-Right-click the tray icon:
+Left-click the tray icon to open the Theme Gallery. Right-click it for the menu:
 
 ![Tray menu](docs/tray-menu.png)
 
 | Item | What it does |
 |---|---|
-| Status line | Shows the current song and whether it is playing or paused. Reads "No Song Detected" when a player is open but idle, and "Not running" when none is open |
+| Status line | Shows the current song and whether it is playing or paused. Reads "No Song Detected" when a player is open but idle, and "Application Not Running" when none is open |
 | Theme Gallery | Opens the Theme Gallery in your browser |
 | Open in Browser | Opens the overlay in one of your favorite themes |
 | Copy URL | Copies the overlay address for one of your favorite themes |
+| Open Log | Opens `nowplaying.log`, which helps when something isn't working |
+| Version | Shows which version you're running. Click it to see the releases page | 
 | Restart | Restarts the app, so `config.toml` changes are picked up. |
 | Quit | Closes the app. |
 
@@ -94,6 +101,8 @@ Add these to the overlay address, for example `http://localhost:5000/overlay.htm
 
 ### Choosing a scale
 At normal size, the default overlay is 620 x 180 pixels. When you change the scale, set the OBS browser source width and height to match, or the overlay will be cut off or leave empty space.
+
+The easiest way to get the right size for any theme: open it in the Theme Gallery and click its preview. The enlarged view shows the exact browser source size at each scale.
 
 | Scale | Browser Source Size | Good For |
 |---|---|---|
@@ -160,7 +169,7 @@ Change one value at a time, by about 5 for the floor and ceiling and by about 0.
 
 ## Reporting problems and ideas
 
-Open an [issue](https://github.com/S7nco/nowplaying/issues) with your app version, your Windows version, which player you use, and the contents of `nowplaying.log`. Feature ideas are welcome there too.
+Open an [issue](https://github.com/S7nco/nowplaying/issues) with your app version (shown in the tray menu; 0.2.0 and later), your Windows version, which player you use and the contents of `nowplaying.log` (tray menu -> **Open Log**). Feature ideas are welcome there too. 
 
 
 ## Network Note
@@ -170,7 +179,7 @@ By default the overlay server only accepts connections from the same PC (`bind_a
 bind_address = "0.0.0.0"
 ```
 
-Then use your PC's network address instead of `localhost`, for example `http://192.168.1.1:5000/overlay.html`. Run `ipconfig` in the terminal and look for **IPv4 Address** to find it. Windows may ask to allow network access the first time: allow **Private networks**. The app does no send any data to the internet.
+Then use your PC's network address instead of `localhost`, for example `http://192.168.1.21:5000/overlay.html`. Run `ipconfig` in the terminal and look for **IPv4 Address** to find it. Windows may ask to allow network access the first time: allow **Private networks**. The app does not send any data to the internet.
 
 ## Building from Source
 
