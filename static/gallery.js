@@ -397,7 +397,7 @@ function openBig(name, fromHistory = false) {
     swatches.querySelectorAll(".sw").forEach(sw =>
         sw.addEventListener("click", () => setPreviewBg(sw.dataset.bg)));
 
-    const closeBtn = el("button", { className: "close", title: "Close (Esc)" }, "×");
+    const closeBtn = el("button", { className: "close", title: "Close (Esc)", autofocus: true }, "×");
     const dialog = el("dialog", { className: "big" },
         el("div", { className: "big-body" },
             el("div", { className: "big-head" },
