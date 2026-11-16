@@ -346,9 +346,10 @@ function makeCard(name) {
 // Enlarged view: Click a preview to see that theme bigger
 // ====================================================
 
-const BIG_MAX_H = 520; // tallest the enlarged preview gets, in pixels
+const BIG_MAX_H = 520;  // tallest the enlarged preview gets, in pixels
+let bigDialog = null;   // the open enlarged view, if any
 
-function openBig(name) {
+function openBig(name, fromHistory = false) {
     const view = el("div", { className: "view" });
     view.dataset.theme = name;
     view.dataset.maxH = BIG_MAX_H;
@@ -420,13 +421,28 @@ function openBig(name) {
     // a click on the dimmed area around the box lands on the dialog itself
     dialog.addEventListener("click", e => { if (e.target === dialog) dialog.close(); });
     // closing (Esc, ×, outside) removes it, which also stops its preview
-    dialog.addEventListener("close", () => dialog.remove());
+    dialog.addEventListener("close", () => {
+        dialog.remove();
+        if (bigDialog === dialog) bigDialog = null;
+        // closed with (Esc, ×, outside or back): leave its history entry too, so Back doesn't reopen it
+        if (history.state?.big) history.back();
+    });
 
     document.body.appendChild(dialog);
     setScale(1);
+    // give it its own history entry (gallery.html#name), so the Back button closes it
+    if (!fromHistory) history.pushState({ big: name }, "", "#" + name);
+    bigDialog = dialog;
     dialog.showModal();
     loadView(view);
 }
+
+// Back closes the enlarged view; Forward opens it again
+window.addEventListener("popstate", () => {
+    if (bigDialog) bigDialog.close();
+    const name = history.state?.big;
+    if (name && allThemeNames().includes(name)) openBig(name, true);
+});
 
 function allThemeNames() {
     return [...(themes.examples || []), ...(themes.styles || []), ...(themes["game-inspired"] || []), ...(themes.custom || [])];
@@ -571,5 +587,14 @@ fetch("/themes.json")
     .then(r => r.json())
     .then(data => { themes = data; })
     .then(loadFavorites)
-    .then(render)
+    .then(() => {
+        render();
+        // gallery.html#name opens that theme
+        const name = location.hash.slice(1);
+        if (name && allThemeNames().includes(name)) {
+            // drop the #name from this entry first, so closing the view stays on the gallery
+            history.replaceState(null, "", location.pathname + location.search);
+            openBig(name);
+        }
+    })
     .catch(() => { document.getElementById("count").textContent = "Couldn't load the theme list. Is the server running?"; });
