@@ -54,6 +54,7 @@
         dialog.big .tags { padding: 8px 16px; }
         .close { background: none; border: 0; padding: 0 4px; font-size: 24px; line-height: 1; color: #9aa3b8; cursor: pointer; }
         .close:hover { color: #fff; }
+        .scale { display: inline-flex; gap: 4px; }
 
 #playToggle {
         margin-left: 10px;

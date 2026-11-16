@@ -234,9 +234,11 @@ function layout(view) {
     if (!r.width || !r.height) return;
 
     // Size for the OBS browser source: the overlay plus the page's padding (--offset) on both sides
-    const obsW = Math.ceil(r.width + r.left * 2);
-    const obsH = Math.ceil(r.height + r.top * 2);
-    view.dataset.obsSize = `${obsW}×${obsH}`;   // the enlarged view reads this
+    // times the scale picked in the enlarged view (?scale= zooms the whole page)
+    const s = Number(view.dataset.urlScale) || 1;
+    const obsW = Math.ceil((r.width + r.left * 2) * s);
+    const obsH = Math.ceil((r.height + r.top * 2) * s);
+    view.dataset.obsSize = `${obsW}×${obsH}`; 
     const sizeTag = view.parentElement.querySelector(".size");
     if (sizeTag) sizeTag.textContent = `${obsW}×${obsH}`;
 
@@ -259,8 +261,9 @@ window.addEventListener("resize", () => {
     });
 });
 
-function themeUrl(name) {
-    return `${location.origin}/overlay.html?theme=${encodeURIComponent(name)}`;
+function themeUrl(name, scale = 1) {
+    const url = `${location.origin}/overlay.html?theme=${encodeURIComponent(name)}`;
+    return scale === 1 ? url : `${url}&scale=${scale}`;
 }
 
 function copy(text, button) {
@@ -357,11 +360,26 @@ function openBig(name) {
     star.addEventListener("click", () => toggleFavorite(name));
 
     // the URL to paste into OBS; click the box to select it all
-    const url = themeUrl(name);
-    const urlBox = el("input", { className: "big-url", type: "text", value: url, readOnly: true });
+    let scale = 1;
+    const urlBox = el("input", { className: "big-url", type: "text", readOnly: true });
     urlBox.addEventListener("focus", () => urlBox.select());
+    const openLink = el("a", { className: "open", target: "_blank", rel: "noopener" }, "Open");
     const copyBtn = el("button", { className: "copy" }, "Copy URL");
-    copyBtn.addEventListener("click", () => copy(url, copyBtn));
+    copyBtn.addEventListener("click", () => copy(themeUrl(name, scale), copyBtn));
+
+    // Scale: 1x, 1.5x, 2x. Updates the URL and the OBS size
+    const scaleBtns = [1, 1.5, 2].map(s => {
+        const b = el("button", { className: "chip" }, `${s}×`);
+        b.addEventListener("click", () => setScale(s));
+        return b;
+    });
+    function setScale(s) {
+        scale = s;
+        scaleBtns.forEach((b, i) => b.classList.toggle("on", [1, 1.5, 2][i] === s));
+        urlBox.value = openLink.href = themeUrl(name, s);
+        view.dataset.urlScale = s;
+        layout(view);
+    }
 
     // background swatches: a copy of the page's, sharing the same setting
     const swatches = document.querySelector(".bar .swatches").cloneNode(true);
@@ -380,8 +398,9 @@ function openBig(name) {
                 el("span", { className: "tag size", title: "Width × Height for the OBS browser source" })),
             el("div", { className: "big-foot" },
                 urlBox,
-                el("a", { className: "open", href: url, target: "_blank", rel: "noopener" }, "Open"),
+                openLink,
                 copyBtn,
+                el("span", { className: "scale" }, ...scaleBtns),
                 swatches,
             ),
         ),
@@ -394,6 +413,7 @@ function openBig(name) {
     dialog.addEventListener("close", () => dialog.remove());
 
     document.body.appendChild(dialog);
+    setScale(1);
     dialog.showModal();
     loadView(view);
 }
