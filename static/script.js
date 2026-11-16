@@ -80,11 +80,24 @@ let energy = 0;
 // Pending popup timers
 let popupTimers = [];
 
+// The latest song data (the gallery's Replay popup button uses it)
+let lastData = null;
+
 // "1" or "0" for data-playing: in a gallery preview the Play/Pause button decides, otherwise the player does
 function playingAttr() {
     if (PREVIEW) return window.__previewPaused ? "0" : "1";
     return isPlaying ? "1" : "0";
 }
+
+// The gallery's "Replay popup" button calls this: hide, then run the popup like a song change
+window.replayPopup = () => {
+    if (!popupConfig().enabled || !lastData) return;
+    popupTimers.forEach(clearTimeout);
+    popupTimers = [];
+    overlayEl.dataset.phase = "hidden";     // start hidden, so the entrance animation plays
+    popupTimers.push(setTimeout(() =>
+        showPopup(cardTextFor(cleanAlbum(lastData.album), lastData.title, lastData.album)), 600));
+};
 
 // The gallery's Play/Pause button calls this
 window.setPreviewPaused = (paused) => {
@@ -246,6 +259,7 @@ function updateArtwork(data) {
 }
 
 function applyNowPlaying(data) {
+    lastData = data;
     setMarquee("title", data.title);
     setMarquee("artist", data.artist);
     setMarquee("album", cleanAlbum(data.album));
@@ -434,6 +448,11 @@ function showPopup(albumText) {
     popupTimers.push(setTimeout(() => {
         overlayEl.dataset.phase = "hidden";
     }, cardMs + cfg.showMs));
+
+     // a gallery preview comes back after the popup ends, so it doesn't stay blank
+    if (PREVIEW) popupTimers.push(setTimeout(() => {
+        overlayEl.dataset.phase = "track";
+    }, cardMs + cfg.showMs + 1200));
 }
 
 // ============================================================

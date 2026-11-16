@@ -193,6 +193,7 @@ function whenReady (frame, view) {
             if (overlay) new win.ResizeObserver(() => layout(view)).observe(overlay);
             layout(view);
             showTags(frame, view);
+            view.dispatchEvent(new CustomEvent("preview-ready", { detail: frame }));
         };
         if (win.overlayReady) ready();
         else win.addEventListener("overlay-ready", ready, { once: true });
@@ -359,6 +360,15 @@ function openBig(name) {
     styleStar(star, favorites.has(name));
     star.addEventListener("click", () => toggleFavorite(name));
 
+    // Replay popup: only shown for popup themes, once the preview has loaded
+    const replayBtn = el("button", { className: "chip", hidden: true }, "↻ Replay popup");
+    view.addEventListener("preview-ready", e => {
+        const win = e.detail.contentWindow;
+        const isPopup = win.getComputedStyle(win.document.documentElement).getPropertyValue("--popup").trim() === "1";
+        replayBtn.hidden = !isPopup;
+        replayBtn.onclick = () =>  win.replayPopup?.();
+    }, { once: true });
+
     // the URL to paste into OBS; click the box to select it all
     let scale = 1;
     const urlBox = el("input", { className: "big-url", type: "text", readOnly: true });
@@ -391,7 +401,7 @@ function openBig(name) {
         el("div", { className: "big-body" },
             el("div", { className: "big-head" },
                 el("h2", {}, themeLabel(name)),
-                el("div", { className: "action" }, star, closeBtn),
+                el("div", { className: "action" }, replayBtn, star, closeBtn),
             ),
             view,
             el("div", { className: "tags" },
