@@ -19,7 +19,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 enum Action {
     Open(String),
     Copy(String),
-    CopyNetwork(String),    // a theme name: the URL is built with the current network address when clicked
+    CopyNetwork(String), // a theme name: the URL is built with the current network address when clicked
     Restart,
     Quit,
 }
@@ -77,9 +77,9 @@ fn local_ip() -> Option<std::net::IpAddr> {
 /// The address other devices use to reach the overlay, or None if only this PC can connect
 fn network_host() -> Option<String> {
     match config::get().bind_address.trim() {
-        "127.0.0.1" | "localhost" | "::1" => None,                  // This PC only
-        "0.0.0.0" => local_ip().map(|ip| ip.to_string()),   // Every network: use this PC's address
-        other => Some(other.to_string()),                     // A specific address was set: use it
+        "127.0.0.1" | "localhost" | "::1" => None, // This PC only
+        "0.0.0.0" => local_ip().map(|ip| ip.to_string()), // Every network: use this PC's address
+        other => Some(other.to_string()),          // A specific address was set: use it
     }
 }
 
@@ -109,7 +109,7 @@ fn fill_submenu(
 fn rebuild_favorites(
     open_menu: &Submenu,
     copy_menu: &Submenu,
-    net_menu: Option<&Submenu>,         // only when other devices can connect
+    net_menu: Option<&Submenu>, // only when other devices can connect
     actions: &Arc<Mutex<HashMap<MenuId, Action>>>,
     items: &mut Vec<MenuItem>,
 ) {
@@ -132,10 +132,28 @@ fn rebuild_favorites(
         while net.remove_at(0).is_some() {}
     }
 
-    fill_submenu(open_menu, &names, |n| Action::Open(overlay_url("localhost", n)), &mut map, items);
-    fill_submenu(copy_menu, &names, |n| Action::Copy(overlay_url("localhost", n)), &mut map, items);
+    fill_submenu(
+        open_menu,
+        &names,
+        |n| Action::Open(overlay_url("localhost", n)),
+        &mut map,
+        items,
+    );
+    fill_submenu(
+        copy_menu,
+        &names,
+        |n| Action::Copy(overlay_url("localhost", n)),
+        &mut map,
+        items,
+    );
     if let Some(net) = net_menu {
-        fill_submenu(net, &names, |n| Action::CopyNetwork(n.to_string()), &mut map, items);
+        fill_submenu(
+            net,
+            &names,
+            |n| Action::CopyNetwork(n.to_string()),
+            &mut map,
+            items,
+        );
     }
 }
 
@@ -226,7 +244,13 @@ pub fn run(shared: Status) {
     let net_menu = network_host().map(|_| Submenu::new("Copy Network URL", true));
     let mut fav_items: Vec<MenuItem> = Vec::new();
     let mut seen_version = favorites::version();
-    rebuild_favorites(&open_menu, &copy_menu, net_menu.as_ref(), &actions, &mut fav_items);
+    rebuild_favorites(
+        &open_menu,
+        &copy_menu,
+        net_menu.as_ref(),
+        &actions,
+        &mut fav_items,
+    );
 
     // Opens the theme gallery page in the browser
     let gallery_url = format!("http://localhost:{}/gallery.html", config::get().port);
@@ -350,7 +374,13 @@ pub fn run(shared: Status) {
                 let version = favorites::version();
                 if version != seen_version {
                     seen_version = version;
-                    rebuild_favorites(&open_menu, &copy_menu, net_menu.as_ref(), &actions, &mut fav_items);
+                    rebuild_favorites(
+                        &open_menu,
+                        &copy_menu,
+                        net_menu.as_ref(),
+                        &actions,
+                        &mut fav_items,
+                    );
                 }
 
                 let current = shared.lock().unwrap().clone();
