@@ -49,6 +49,52 @@ fn already_running() -> bool {
     }
 }
 
+/// Asks the copy that's already running for its version (GET /version on this PC).
+/// None if it doesn't answer within a second, e.g. an older version without /version.
+fn running_version() -> Option<String> {
+    use std::io::{Read, Write};
+    use std::time::Duration;
+
+    let addr = std::net::SocketAddr::from(([127, 0, 0, 1], config::get().port));
+    let mut stream = std::net::TcpStream::connect_timeout(&addr, Duration::from_secs(1)).ok()?;
+    stream.set_read_timeout(Some(Duration::from_secs(1))).ok()?;
+    stream
+        .write_all(b"GET /version HTTP/1.0\r\nHost: localhost\r\n\r\n")
+        .ok()?;
+    let mut response = String::new();
+    stream.read_to_string(&mut response).ok()?;
+    // the reply is "HTTP/1.1 200 OK ... headers ... (blank line) 0.2.0"
+    let (head, body) = response.split_once("\r\n\r\n")?;
+    let version = body.trim();
+    (head.contains(" 200 ") && !version.is_empty() && version.len() <= 20)
+        .then(|| version.to_string())
+}
+
+/// Tells the user another copy is already running, instead of closing without a word
+fn show_already_running() {
+    use windows::Win32::UI::WindowsAndMessaging::{MB_ICONINFORMATION, MB_OK, MessageBoxW};
+    use windows::core::{HSTRING, w};
+
+    let this = env!("CARGO_PKG_VERSION");
+    let text = match running_version() {
+        Some(running) if running != this => format!(
+            "Now Playing {running} is already running, so this copy ({this}) won't start.\n\n\
+            To switch, right-click its tray icon, choose Quit, then start this one again."
+        ),
+        _ => "Now Playing is already running.\n\n\
+            Look for its icon in the system tray (you may need to click the ^ arrow)."
+            .to_string(),
+    };
+    unsafe {
+        MessageBoxW(
+            None,
+            &HSTRING::from(text),
+            w!("Now Playing"),
+            MB_OK | MB_ICONINFORMATION,
+        );
+    }
+}
+
 // ============================================================
 // Main: starts the server, the status thread, and the tray icon
 // ============================================================
@@ -68,6 +114,11 @@ fn main() {
     while already_running() {
         tries -= 1;
         if tries == 0 {
+            // a normal start found another copy: say so. After Restart, the old copy just
+            // took too long to close; that's rare, and a message there would only confuse
+            if !restarted {
+                show_already_running();
+            }
             return; // another copy owns the tray icon and the port
         }
         std::thread::sleep(std::time::Duration::from_millis(100));
