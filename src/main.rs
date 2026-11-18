@@ -22,6 +22,8 @@ mod server;
 mod themes;
 // handles the system tray icon and menu
 mod tray;
+// checks every request: right host, own pages only, changes from this PC only
+mod guard;
 
 // Lets the other files keep calling crate::log(...)
 pub use logging::log;

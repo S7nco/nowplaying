@@ -26,7 +26,7 @@ function saveFavorite(name, on) {
     fetch("/favorites/" + encodeURIComponent(name), { method: on ? "PUT" : "DELETE" })
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(applyServerFavorites)
-        .catch(() => {});
+        .catch(() => refreshFavorites());   // refused (e.g. from another device): show the server's list again
 }
 
 // Replaces this tab's favorites with the server's list and redraws the stars

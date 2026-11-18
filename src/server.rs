@@ -267,7 +267,9 @@ pub async fn run() {
         .layer(SetResponseHeaderLayer::overriding(
             header::CACHE_CONTROL,
             HeaderValue::from_static("no-cache"),
-        ));
+        ))
+        // every request passes the security checks first (see guard.rs)
+        .layer(axum::middleware::from_fn(crate::guard::guard));
 
     // if the port can't be bound, log the error and exit
     let port = config::get().port;
@@ -282,7 +284,12 @@ pub async fn run() {
     log(&format!(
         "Server running on http://localhost:{port} (listening on {addr})"
     ));
-    if let Err(e) = axum::serve(listener, app).await {
+    if let Err(e) = axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .await
+    {
         log(&format!("Server stopped: {e}"));
         std::process::exit(1);
     }
