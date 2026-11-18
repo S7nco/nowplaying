@@ -318,6 +318,17 @@ function makeCard(name) {
     view.dataset.theme = name;
     view.addEventListener("click", () => openBig(name));
 
+    // Keyboard: Tab reaches the preview, Enter or Space opens it bigger
+    view.tabIndex = 0;
+    view.setAttribute("role", "button");
+    view.setAttribute("aria-label", `Enlarge ${themeLabel(name)}`);
+    view.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault(); // Space would otherwise scroll the page
+            openBig(name);
+        }
+    });
+
     const star = el("button", { className: "fav" });
     styleStar(star, favorites.has(name));
     star.dataset.name = name;

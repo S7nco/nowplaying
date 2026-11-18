@@ -145,7 +145,11 @@ input[type=search] {
     transition: opacity 0.15s ease;
     pointer-events: none;
 }
-.grid .view:hover::after { opacity: 1; }
+.grid .view:hover::after,
+.grid .view:focus-visible::after { opacity: 1; }
+
+/* Keyboard focus on a preview: a clear outline inside its edge */
+.grid .view:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 /* People who turn off animations in Windows get no movement */
 @media (prefers-reduced-motion: reduce) {
