@@ -156,18 +156,18 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
                 Ok(Some(bytes)) => log_artwork_once(
                     &key,
                     format!(
-                        "Artwork: {} bytes for {title:?} isn't an image yet, retrying",
+                        "Artwork: {} bytes isn't an image yet, retrying",
                         bytes.len()
                     ),
                 ),
                 Ok(None) => {
-                    log_artwork_once(&key, format!("Artwork: empty thumbnail for {title:?}"))
+                    log_artwork_once(&key, "Artwork: empty thumbnail".to_string())
                 }
                 Err(e) => {
-                    log_artwork_once(&key, format!("Artwork: read failed for {title:?}: {e}"))
+                    log_artwork_once(&key, format!("Artwork: read failed: {e}"))
                 }
             },
-            Err(e) => log_artwork_once(&key, format!("Artwork: no thumbnail for {title:?}: {e}")),
+            Err(e) => log_artwork_once(&key, format!("Artwork: no thumbnail: {e}")),
         }
     }
 

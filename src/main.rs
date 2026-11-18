@@ -97,6 +97,20 @@ fn show_already_running() {
     }
 }
 
+/// The app's folder for the log, with the user's own folder shown as %USERPROFILE%,
+/// so a log pasted into a public issue doesn't show the Windows user name
+fn folder_for_log() -> String {
+    let dir = std::env::current_dir().unwrap_or_default().display().to_string();
+    match std::env::var("USERPROFILE") {
+        Ok(home) if !home.is_empty()
+            && dir.get(..home.len()).is_some_and(|start| start.eq_ignore_ascii_case(&home)) =>
+        {
+            format!("%USERPROFILE%{}", &dir[home.len()..])
+        }
+        _ => dir,
+    }
+}
+
 // ============================================================
 // Main: starts the server, the status thread, and the tray icon
 // ============================================================
@@ -137,12 +151,12 @@ fn main() {
     log("started");
     let c = config::get();
     log(&format!(
-        "config: port={} floor={} ceil={} tilt={} (folder: {:?})",
+        "config: port={} floor={} ceil={} tilt={} (folder: {})",
         c.port,
         c.eq_floor_db,
         c.eq_ceil_db,
         c.eq_tilt_db,
-        std::env::current_dir().unwrap_or_default()
+        folder_for_log()
     ));
 
     // the web sever and audio run on their own thead

@@ -172,6 +172,8 @@ Change one value at a time, by about 5 for the floor and ceiling and by about 0.
 
 Open an [issue](https://github.com/S7nco/nowplaying/issues) with your app version (shown in the tray menu; 0.2.0 and later), your Windows version, which player you use and the contents of `nowplaying.log` (tray menu -> **Open Log**). Feature ideas are welcome there too. 
 
+The log doesn't include your Windows user name or what you listen to, but have a look through it before posting.
+
 
 ## Network Note
 
