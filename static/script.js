@@ -150,7 +150,10 @@ function cleanAlbum(album) {
 // 83 -> "1:23"
 function formatTime(seconds) {
     const s = Math.max(0, Math.floor(seconds));
-    return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    const h = Math.floor(s / 3600);
+    const m = Math.floor(s / 60) % 60;
+    const sec = String(s % 60).padStart(2, "0");
+    return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
 }
 
 // Text for the popup's album card: empty if the album just repeats the song title
@@ -305,8 +308,11 @@ function setMarquee(id, text) {
     if (span.offsetWidth > el.clientWidth) {                        // Too long for the box
         span.textContent = text + MARQUEE_GAP + text + MARQUEE_GAP;
 
-        const speed = parseFloat(cssSetting("--marquee-speed")) || MARQUEE_SPEED;
-        const pause = cssSetting("--marquee-pause") !== "" ? parseFloat(cssSetting("--marquee-pause")) : MARQUEE_PAUSE;
+        //Theme settings: use them only if they're sensible numbers, otherwise the defaults
+        const speedSetting = parseFloat(cssSetting("--marquee-speed"));
+        const speed = speedSetting > 0 ? speedSetting : MARQUEE_SPEED;
+        const pauseSetting = parseFloat(cssSetting("--marquee-pause"));
+        const pause = pauseSetting >= 0 ? pauseSetting : MARQUEE_PAUSE;
         const scroll = (span.offsetWidth / 2) / speed;
         const total = scroll + pause; 
         span.animate([
