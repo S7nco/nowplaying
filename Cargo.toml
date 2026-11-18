@@ -1,6 +1,6 @@
 [package]
 name = "nowplaying"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2024"
 description = "Now-playing overlay for OBS (Apple Music / Spotify) on Windows"
 license = "MIT"
