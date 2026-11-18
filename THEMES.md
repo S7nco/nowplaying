@@ -105,6 +105,7 @@ Don't set these in a theme. Read them in your CSS.
 | `--cover` | The cover as an image, for example *background-image: var(--cover);* (good for blurred backgrounds) |
 | `--level` | Height of each equalizer bar | 
 | `data-playing` on `#overlay` | *1* while playing, *0* while paused | 
+| `data-live="1"` on `#overlay` | The song has no end time (live radio, streams). The progress bar and times are hidden by default |
 | `data-skip` on `#overlay` | Present for a moment right after the song changes | 
 | `data-phase` on `#overlay` | *visible* normally. For popup themes it goes through *station* (the first card), *track* (the title and artist), and *hidden*. |
 

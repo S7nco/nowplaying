@@ -124,6 +124,9 @@ body {
     background: var(--bar-color, var(--accent, white));
     transition: width 0.2s linear;
 }
+/* Live radio and streams: no progress bar or times (themes can override) */
+#overlay[data-live="1"] #progress,
+#overlay[data-live="1"] #time { visibility: hidden; }
 
 /* ---------- Time ---------- */
 #time {

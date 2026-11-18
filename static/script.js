@@ -186,30 +186,39 @@ function estimatedPosition() {
 
 // Takes the server's latest data and re-anchors the estimate when needed
 function syncProgress(data) {
-    // Nothing playing
-    if (data.position == null || !data.duration) { 
+    // Nothing playing: no song at all
+    if (!data.title) { 
         lastKnownDuration = 0;
         lastTrack = null;
         isPlaying = false;
         overlayEl.dataset.playing = playingAttr();
+        delete overlayEl.dataset.live;
         progressEl.style.width = "0%";
         return;
     }
 
     const trackKey = data.title + "|" + data.artist;
     const trackChanged = trackKey !== lastTrack;
-    const stateChanged = trackChanged || data.playing !== isPlaying;
-    const drift = data.position - estimatedPosition();
+    const playing = data.playing === true;
+    const stateChanged = trackChanged || playing !== isPlaying;
     
-    // Only re-anchor on a new song, a play/pause change, or when the drift is too large
-    if (stateChanged || Math.abs(drift) > RESYNC_THRESHOLD) {
-        lastKnownPosition = data.position;
-        lastSyncTime = Date.now();
+    // Live radio and streams have no end time: no progress bar, but still playing and still popping up
+    const live = data.position == null || !(data.duration > 0);
+    if (live) {
+        lastKnownDuration = 0;
+    } else {
+        // Only re-anchor on a new song, a play/pause change, or when the drift is too large
+        const drift = data.position - estimatedPosition();
+        if (stateChanged || Math.abs(drift) > RESYNC_THRESHOLD) {
+            lastKnownPosition = data.position;
+            lastSyncTime = Date.now();
+        }
+        lastKnownDuration = data.duration;
     }
-    lastKnownDuration = data.duration;
     lastTrack = trackKey;
-    isPlaying = data.playing;
+    isPlaying = playing;
     overlayEl.dataset.playing = playingAttr();
+    overlayEl.dataset.live = live ? "1" : "0";
 
     if (trackChanged) {
         overlayEl.dataset.skip = "1";
@@ -234,6 +243,7 @@ function tickProgressBar() {
         setVar(overlayEl, "--progress", "0");
         if (elapsedEl) setText(elapsedEl, "0:00");
         if (totalEl) setText(totalEl, "0:00");
+        progressEl.style.width = "0%";
     }
 }
 
