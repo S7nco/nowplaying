@@ -278,6 +278,26 @@ pub async fn run() {
         Ok(l) => l,
         Err(e) => {
             log(&format!("Could not start server on {addr}: {e}"));
+            let bind = &config::get().bind_address;
+            let why = match e.kind() {
+                std::io::ErrorKind::AddrInUse => format!(
+                    "Port {port} is already used by another program.\n\n\
+                    Change port in config.toml to a free one (for example 5001), then start Now Playing again."
+                ),
+                std::io::ErrorKind::PermissionDenied => format!(
+                    "Windows has reserved port {port} (this can happen with Hyper-V, WSL or Docker).\n\n\
+                    Change port in config.toml (for example 5001), then start Now Playing again."
+                ),
+                std::io::ErrorKind::AddrNotAvailable => format!(
+                    "bind_address \"{bind}\" isn't an address of this PC.\n\n\
+                    In config.toml, use \"127.0.0.1\" (this PC only) or \"0.0.0.0\" (other devices too)."
+                ),
+                _ => format!(
+                    "The overlay server couldn't start on {addr}:\n{e}\n\n\
+                    Check port and bind_address in config.toml."
+                ),
+            };
+            crate::show_message(&format!("Now Playing couldn't start.\n\n{why}"), true);
             std::process::exit(1);
         }
     };

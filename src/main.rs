@@ -72,11 +72,19 @@ fn running_version() -> Option<String> {
         .then(|| version.to_string())
 }
 
-/// Tells the user another copy is already running, instead of closing without a word
-fn show_already_running() {
-    use windows::Win32::UI::WindowsAndMessaging::{MB_ICONINFORMATION, MB_OK, MessageBoxW};
+/// Shows a Windows message box. The app has no console window, so this is how it tells the user something.
+pub fn show_message(text: &str, error: bool) {
+    use windows::Win32::UI::WindowsAndMessaging::{MB_ICONERROR, MB_ICONINFORMATION, MB_OK, MessageBoxW};
     use windows::core::{HSTRING, w};
 
+    let icon = if error { MB_ICONERROR } else { MB_ICONINFORMATION };
+    unsafe {
+        MessageBoxW(None, &HSTRING::from(text), w!("Now Playing"), MB_OK | icon);
+    }
+}
+
+/// Tells the user another copy is already running, instead of closing without a word
+fn show_already_running() {
     let this = env!("CARGO_PKG_VERSION");
     let text = match running_version() {
         Some(running) if running != this => format!(
@@ -87,14 +95,7 @@ fn show_already_running() {
             Look for its icon in the system tray (you may need to click the ^ arrow)."
             .to_string(),
     };
-    unsafe {
-        MessageBoxW(
-            None,
-            &HSTRING::from(text),
-            w!("Now Playing"),
-            MB_OK | MB_ICONINFORMATION,
-        );
-    }
+    show_message(&text, false);
 }
 
 /// The app's folder for the log, with the user's own folder shown as %USERPROFILE%,
@@ -140,8 +141,8 @@ fn main() {
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
 
-    // Clear last run's log, and make any crash get logged and end the app
-    let _ = std::fs::write("nowplaying.log", ""); // Clear the old log
+    // Keep the last run's log as nowplaying.old.log (so a crash isn't wiped by starting again), then start fresh
+    let _ = std::fs::rename("nowplaying.log", "nowplaying.old.log");
     std::panic::set_hook(Box::new(|info| {
         log(&format!("panic: {info}"));
         std::process::exit(1);
