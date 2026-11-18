@@ -136,6 +136,7 @@ Copy `config.example.toml` to `config.toml` (next to `nowplaying.exe`) to change
 |---|---|---|
 | `port` | 5000 | Port the overlay server uses | 
 | `bind_address` | `"127.0.0.1"` | Who can connect: `"127.0.0.1"` is this PC only. `"0.0.0.0"` lets other devices on your network connect (see Network Note) | 
+| `allowed_hosts` | `[]` | Extra names the overlay can be opened by from other devices. IP addresses and this PC's own name always work (see Network Note) |
 | `process_name` | `"AmpLibraryAgent.exe, Spotify.exe"` | The players' process names, used to capture audio for the equalizer | 
 | `app_id_match` | `"applemusic, spotify"` | Part of the player's Windows media ID, used to find the right player |
 | `tray_themes` | `["default"]` | Themes shown in the tray menu until you pick favorites in the gallery | 
@@ -183,6 +184,8 @@ bind_address = "0.0.0.0"
 ```
 
 Then right-click the tray icon and use **Copy Network URL**: it copies the overlay address with your PC's network address instead of `localhost`, ready to paste into OBS on another computer. To type it yourself, run `ipconfig` in the terminal and look for **IPv4 Address** to find it, e.g. `http://192.168.1.21:5000/overlay.html`. Windows may ask to allow network access the first time: allow **Private networks**. The app does not send any data to the internet.
+
+You can also use the PC's name instead of its address, e.g. `http://DESKTOP-ABC:5000/overlay.html`. If your network adds something to the name (like `desktop-abc.lan`), add it to `allowed_hosts` in `config.toml`.
 
 ## Building from Source
 

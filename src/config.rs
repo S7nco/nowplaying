@@ -7,11 +7,12 @@ pub struct Config {
     pub port: u16,
     pub process_name: String,
     pub app_id_match: String,
-    pub eq_floor_db: f32,         // level shown as an empty bar
-    pub eq_ceil_db: f32,          // level shown as a full bar
-    pub eq_tilt_db: f32,          // boost for higher bands, per band
-    pub tray_themes: Vec<String>, // themes listed in the tray menu (the gallery shows all)
-    pub bind_address: String, // who can connect: "0.0.0.0" = any device on your network, "127.0.0.1" = only your own machine
+    pub eq_floor_db: f32,               // level shown as an empty bar
+    pub eq_ceil_db: f32,                // level shown as a full bar
+    pub eq_tilt_db: f32,                // boost for higher bands, per band
+    pub tray_themes: Vec<String>,       // themes listed in the tray menu (the gallery shows all)
+    pub bind_address: String,           // who can connect: "0.0.0.0" = any device on your network, "127.0.0.1" = only your own machine
+    pub allowed_hosts: Vec<String>,     // extra names the overlay may be opened by (this PC's own name always works)
 }
 
 impl Default for Config {
@@ -25,6 +26,7 @@ impl Default for Config {
             eq_tilt_db: 3.0,
             tray_themes: vec!["default".into()],
             bind_address: "127.0.0.1".into(),
+            allowed_hosts: Vec::new(),
         }
     }
 }
