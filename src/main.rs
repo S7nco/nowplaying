@@ -74,10 +74,16 @@ fn running_version() -> Option<String> {
 
 /// Shows a Windows message box. The app has no console window, so this is how it tells the user something.
 pub fn show_message(text: &str, error: bool) {
-    use windows::Win32::UI::WindowsAndMessaging::{MB_ICONERROR, MB_ICONINFORMATION, MB_OK, MessageBoxW};
+    use windows::Win32::UI::WindowsAndMessaging::{
+        MB_ICONERROR, MB_ICONINFORMATION, MB_OK, MessageBoxW,
+    };
     use windows::core::{HSTRING, w};
 
-    let icon = if error { MB_ICONERROR } else { MB_ICONINFORMATION };
+    let icon = if error {
+        MB_ICONERROR
+    } else {
+        MB_ICONINFORMATION
+    };
     unsafe {
         MessageBoxW(None, &HSTRING::from(text), w!("Now Playing"), MB_OK | icon);
     }
@@ -101,10 +107,20 @@ fn show_already_running() {
 /// The app's folder for the log, with the user's own folder shown as %USERPROFILE%,
 /// so a log pasted into a public issue doesn't show the Windows user name
 fn folder_for_log() -> String {
-    let dir = std::env::current_dir().unwrap_or_default().display().to_string();
+    let dir = std::env::current_dir()
+        .unwrap_or_default()
+        .display()
+        .to_string();
     match std::env::var("USERPROFILE") {
-        Ok(home) if !home.is_empty()
-            && dir.get(..home.len()).is_some_and(|start| start.eq_ignore_ascii_case(&home)) =>
+        Ok(home)
+            if !home.is_empty()
+                && dir
+                    .get(..home.len())
+                    .is_some_and(|start| start.eq_ignore_ascii_case(&home))
+                && matches!(
+                    dir[home.len()..].chars().next(),
+                    None | Some('\\') | Some('/')
+                ) =>
         {
             format!("%USERPROFILE%{}", &dir[home.len()..])
         }

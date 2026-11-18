@@ -87,7 +87,11 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
     let wanted = split_list(&crate::config::get().app_id_match);
     let mut found: Option<(_, usize, bool)> = None;
     for s in manager.GetSessions()? {
-        let id = s.SourceAppUserModelId()?.to_string().to_lowercase();
+        // A session that can't report its app (e.g. one that's closing) is skipped, not the whole read
+        let Ok(id) = s.SourceAppUserModelId() else {
+            continue;
+        };
+        let id = id.to_string().to_lowercase();
         let Some(index) = wanted.iter().position(|w| id.contains(w.as_str())) else {
             continue;
         };
@@ -160,12 +164,8 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
                         bytes.len()
                     ),
                 ),
-                Ok(None) => {
-                    log_artwork_once(&key, "Artwork: empty thumbnail".to_string())
-                }
-                Err(e) => {
-                    log_artwork_once(&key, format!("Artwork: read failed: {e}"))
-                }
+                Ok(None) => log_artwork_once(&key, "Artwork: empty thumbnail".to_string()),
+                Err(e) => log_artwork_once(&key, format!("Artwork: read failed: {e}")),
             },
             Err(e) => log_artwork_once(&key, format!("Artwork: no thumbnail: {e}")),
         }
