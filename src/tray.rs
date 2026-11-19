@@ -7,7 +7,7 @@ use tray_icon::{
     menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem, Submenu},
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    DispatchMessageW, GetMessageW, MSG, SetTimer, TranslateMessage, WM_TIMER,
+    DispatchMessageW, GetMessageW, MSG, PostQuitMessage, SetTimer, TranslateMessage, WM_TIMER,
 };
 
 // ============================================================
@@ -324,13 +324,14 @@ pub fn run(shared: Status) {
                 }
             }
             Some(Action::Restart) => {
-                // Start a new copy (same folder, so static/ and config.toml are found), then exit
+                // Start a new copy (same folder, so static/ and config.toml are found), then closes this one
                 if let Ok(exe) = std::env::current_exe() {
                     let _ = std::process::Command::new(exe).arg("--restarted").spawn();
                 }
-                std::process::exit(0);
+                // End the message loop instead of exiting on the spot, so the tray icon is removed properly
+                unsafe { PostQuitMessage(0) };
             }
-            Some(Action::Quit) => std::process::exit(0),
+            Some(Action::Quit) => unsafe { PostQuitMessage(0) },
             None => {}
         }
     }));
@@ -393,5 +394,8 @@ pub fn run(shared: Status) {
             let _ = TranslateMessage(&msg);
             DispatchMessageW(&msg);
         }
+        // The loop ended (Quit or Restart): remove the tray icon before the app closes.
+        drop(tray);
+        crate::log("quit");
     }
 }
