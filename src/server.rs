@@ -268,6 +268,11 @@ pub async fn run() {
             header::CACHE_CONTROL,
             HeaderValue::from_static("no-cache"),
         ))
+        // browsers must use the file type the server says, never guess it from the content
+        .layer(SetResponseHeaderLayer::overriding(
+            header::X_CONTENT_TYPE_OPTIONS,
+            HeaderValue::from_static("nosniff"),
+        ))
         // every request passes the security checks first (see guard.rs)
         .layer(axum::middleware::from_fn(crate::guard::guard));
 
