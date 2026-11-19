@@ -158,9 +158,18 @@ fn main() {
     }
 
     // Keep the last run's log as nowplaying.old.log (so a crash isn't wiped by starting again), then start fresh
-    let _ = std::fs::rename("nowplaying.log", "nowplaying.old.log");
+    // if renaming fails (e.g. the old log is open in another program), empty the log instead.
+    if std::fs::rename("nowplaying.log", "nowplaying.old.log").is_err() {
+        let _ = std::fs::write("nowplaying.log", "");
+    }
     std::panic::set_hook(Box::new(|info| {
         log(&format!("panic: {info}"));
+        show_message(
+            "Now Playing stopped because of an unexpected error.\n\n\
+            The details are in nowplaying.log, in the app's folder. If it keeps happening, \
+            please report it on GitHub with that file.",
+            true,
+        );
         std::process::exit(1);
     }));
 

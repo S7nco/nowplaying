@@ -48,14 +48,27 @@ fn refuse(why: &'static str) -> Response {
     (StatusCode::FORBIDDEN, why).into_response()
 }
 
+/// "name:5000" -> "name", "[::1]:5000" -> "::1". Also accepts a full address like "http://name:5000/".
+fn host_name(host: &str) -> &str {
+    let host = host
+        .trim()
+        .trim_start_matches("http://")
+        .trim_start_matches("https://")
+        .trim_end_matches('/');
+    match host.strip_prefix('[') {
+        Some(rest) => rest.split(']').next().unwrap_or(""), // [::1]:5000
+        None => host.rsplit_once(':').map_or(host, |(name, _)| name), // name:5000
+    }
+}
+
 /// "localhost:5000", "127.0.0.1:5000", "192.168.1.20:5000" and "[::1]:5000" are fine;
 /// this PC's own name (e.g. "DESKTOP-ABC:5000" or "desktop-abc.local:5000"), plus any names
 /// listed in allowed_hosts. Other names like "evil.com", aren't
 fn host_allowed(host: &str) -> bool {
-    let name = match host.strip_prefix('[') {
-        Some(rest) => rest.split(']').next().unwrap_or(""), // [::1]:5000
-        None => host.rsplit_once(':').map_or(host, |(name, _)| name), // name:5000
-    };
+    let name = host_name(host);
+    if name.is_empty() {
+        return false;
+    }
     if name.eq_ignore_ascii_case("localhost") || name.parse::<IpAddr>().is_ok() {
         return true;
     }
@@ -70,5 +83,5 @@ fn host_allowed(host: &str) -> bool {
     crate::config::get()
         .allowed_hosts
         .iter()
-        .any(|allowed| name.eq_ignore_ascii_case(allowed.trim()))
+        .any(|allowed| !allowed.is_empty() && name.eq_ignore_ascii_case(allowed))
 }

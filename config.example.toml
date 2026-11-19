@@ -10,6 +10,7 @@
 
 # Extra names other devices may use to open the overlay, besides IP addresses and this PC's
 # own name (which always work). Only needed for names like "desktop-abc.lan"
+# Write just the name; a port is ignored. Wildcards like "*.lan" aren't supported.
 # allowed_hosts = ["desktop-abc.lan"]
 
 # Port the overlay server runs on. If you change it, change the address in OBS too.

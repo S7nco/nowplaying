@@ -311,6 +311,13 @@ pub async fn run() {
     .await
     {
         log(&format!("Server stopped: {e}"));
+        crate::show_message(
+            &format!(
+                "Now Playing's overlay server stopped unexpectedly:\n{e}\n\n\
+                Start Now Playing again. The details are in nowplaying.log."
+            ),
+            true,
+        );
         std::process::exit(1);
     }
 }
