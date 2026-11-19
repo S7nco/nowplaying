@@ -29,6 +29,7 @@ serves the overlay as a local web page, and ships with themes, an audio equalize
 ## Quick Start
 
 1. Download `NowPlaying-...zip` from the [latest release](https://github.com/S7nco/nowplaying/releases/latest) and unzip it anywhere.
+   - To check the download, compare `Get-FileHash NowPlaying-....zip` (in PowerShell) with the code in the `.sha256` file next to the zip on the release page. They should match.
 2. Run `nowplaying.exe`. An icon appears in the system tray.
 3. Start playing something in Apple Music or Spotify.
 4. In OBS, add a Browser source with:

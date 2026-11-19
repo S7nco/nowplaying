@@ -33,6 +33,12 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - name: Check dependencies for known security problems
+        shell: pwsh
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
+
       - name: Build and package
         shell: pwsh
         run: ./package.ps1
@@ -40,10 +46,19 @@ jobs:
       - name: Name the zip after the version
         shell: pwsh
         run: Rename-Item dist/NowPlaying.zip "NowPlaying-${{ github.ref_name }}.zip"
+      
+      - name: Checksum for the zip
+        shell: pwsh
+        run: |
+          $name = "NowPlaying-${{ github.ref_name }}.zip"
+          $hash = (Get-FileHash "dist/$name" -Algorithm SHA256).Hash.ToLower()
+          "$hash  $name" | Out-File -Encoding ascii "dist/$name.sha256"
 
       - name: Publish the release
         uses: softprops/action-gh-release@v3
         with:
-          files: dist/NowPlaying-${{ github.ref_name }}.zip
+          files: |
+            dist/NowPlaying-${{ github.ref_name }}.zip
+            dist/NowPlaying-${{ github.ref_name }}.zip.sha256
           body_path: release-notes/${{ github.ref_name }}.md
           generate_release_notes: true
