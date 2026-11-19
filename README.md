@@ -175,6 +175,25 @@ Open an [issue](https://github.com/S7nco/nowplaying/issues) with your app versio
 
 The log doesn't include your Windows user name or what you listen to, but have a look through it before posting.
 
+## Privacy
+
+Now Playing runs entirely on your PC. It doesn't send anything to the internet: no statistics, no tracking, and no update checks (the **Version** item in the tray menu only opens the releases page when you click it).
+
+**What it reads**
+- The song that's playing (title, artist, album, cover, position), from Windows' media controls, the same information Windows shows in its volume popup.
+- The audio of your music player only, to drive the equalizer. It's analysed as it plays and never saved or sent anywhere.
+
+**What it saves**, next to `nowplaying.exe`
+- `config.toml`: your settings
+- `favorites.json`: your favorite themes
+- `nowplaying.log` and `nowplaying.old.log`: what the app did. They don't contain your Windows user name or song titles, but check them before posting them anywhere.
+- `static\cover.jpg`: the current song's cover, for the overlay
+
+The Theme Gallery also remembers your favorites and preview background in your browser.
+
+**Who can connect.** By default, only this PC. Other websites open in your browser can't read what you're playing or change anything. With `bind_address = "0.0.0.0"`, other devices on your network can view the overlay and gallery, but only this PC can change anything (see Network Note).
+
+Themes can load fonts or images from the internet if their CSS says so. The included themes don't (check before using a theme from someone else; see [THEMES.md](THEMES.md)).
 
 ## Network Note
 

@@ -187,3 +187,8 @@ The overlay sets *--energy* (0 to 1, the bass level). Use it to make a glow puls
 - **Test backgrounds**. The gallery has color swatches (dark, black, white, green, checker) to check transparent themes.
 - **Fonts**. Put font files in a fonts folder and load them with *@font-face* at the top of your theme.
 - **Sharing**. A theme is one file, so you can share it by sending the *.css* file.
+
+## Using themes from other people
+
+A theme is a CSS file, and CSS can load images and fonts from anywhere on the internet.
+A theme that does this makes the overlay contact the website every time it loads, which tells the website your IP address and when you're streaming. Before using a theme from someone else, open it in a text editor and look for `http://` or `https://`. Fonts and images in the theme's own folder, or in `static/fonts`, are fine.
