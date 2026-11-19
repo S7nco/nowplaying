@@ -4,9 +4,11 @@
 
 # Generated while the app runs
 /static/cover.jpg
+/static/cover.jpg.tmp
 /nowplaying.log
 /nowplaying.old.log
 /favorites.json
+/favorites.json.tmp
 
 # My Personal settings (config.example.toml is the shared template)
 /config.toml

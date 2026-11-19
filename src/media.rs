@@ -148,13 +148,19 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
         match props.Thumbnail() {
             Ok(thumb) => match read_artwork(&thumb) {
                 Ok(Some(bytes)) if looks_like_image(&bytes) => {
-                    if std::fs::write("static/cover.jpg", &bytes).is_ok() {
-                        let secs = SystemTime::now()
-                            .duration_since(UNIX_EPOCH)
-                            .unwrap()
-                            .as_secs_f64();
-                        *last_art = Some(format!("/cover.jpg?timestamp={secs}"));
-                        *last_track = Some(key);
+                    match crate::files::write_atomic("static/cover.jpg", &bytes) {
+                        Ok(()) => {
+                            let secs = SystemTime::now()
+                                .duration_since(UNIX_EPOCH)
+                                .unwrap()
+                                .as_secs_f64();
+                            *last_art = Some(format!("/cover.jpg?timestamp={secs}"));
+                            *last_track = Some(key);
+                        }
+                        // e.g. a read-only folder; it's tried again on the next read, but logged once per song
+                        Err(e) => {
+                            log_artwork_once(&key, format!("Artwork: couldn't save the cover: {e}"))
+                        }
                     }
                 }
                 Ok(Some(bytes)) => log_artwork_once(

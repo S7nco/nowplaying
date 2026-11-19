@@ -51,7 +51,9 @@ fn store(current: &mut Vec<String>, names: Vec<String>) -> Vec<String> {
         }
     }
     if let Ok(text) = serde_json::to_string_pretty(&clean) {
-        let _ = std::fs::write(FILE, text);
+        if let Err(e) = crate::files::write_atomic(FILE, text.as_bytes()) {
+            crate::log(&format!("Couldn't save favorites.json: {e}"));
+        }
     }
     *current = clean.clone();
     SAVED.store(true, Ordering::Relaxed);

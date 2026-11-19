@@ -24,6 +24,8 @@ mod themes;
 mod tray;
 // checks every request: right host, own pages only, changes from this PC only
 mod guard;
+// writing files safely (cover.jpg, favorites.json)
+mod files;
 
 // Lets the other files keep calling crate::log(...)
 pub use logging::log;

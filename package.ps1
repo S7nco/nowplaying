@@ -25,6 +25,7 @@ Copy-Item "icon.ico" $folder
 
 # The cover of whatever you were last playing is saved here while the app runs. Don't ship it.
 Remove-Item "$folder\static\cover.jpg" -ErrorAction SilentlyContinue
+Remove-Item "$folder\static\cover.jpg.tmp" -ErrorAction SilentlyContinue
 
 # Ship an empty custom folder (just the README), not my own themes
 Get-ChildItem "$folder\static\themes\custom" -Exclude "README.txt" | Remove-Item -Recurse -Force
