@@ -1,0 +1,241 @@
+/* Radio tuner: a vintage car radio. Black faceplate with chrome trim, a knob on each side,
+   a backlit FM dial in the middle and a row of preset buttons. No cover art.
+   - The red needle moves across the dial as the song plays (it replaces the progress bar)
+     and sweeps back on each new song, with a burst of static.
+   - The TUNE knob turns with the song, the VOL knob nudges with the bass.
+   - The green "tuning eye" next to FM STEREO opens and closes with the bass. */
+:root {
+    --font: 'Inter', sans-serif;
+    --text: #e6e2da;
+    --text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    --text-align: center;
+    --title-color: #fff6e6;
+    --title-size: 24px;
+    --artist-size: 16px;
+    --secondary-opacity: 0.8;
+
+    --panel-bg:
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px),   /* brushed texture */
+        linear-gradient(180deg, #2c2d31, #18191c 55%, #101113);
+    --border: 3px solid #9a9ea5;
+    --radius: 10px;
+    --padding: 10px 112px 38px;     /* room for the knobs on the sides and the buttons below */
+
+    --accent: #ffb347;
+    --spectrum: 1;                  /* for the tuning eye and the VOL knob */
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('/fonts/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Bebas Neue';
+    src: url('/fonts/Bebas_Neue/BebasNeue-Regular.ttf') format('truetype');
+    font-display: swap;
+}
+
+#overlay {
+    box-shadow:
+        inset 0 0 0 1px #4a4d52,                     /* inner edge of the chrome trim */
+        inset 0 2px 0 1px rgba(255, 255, 255, 0.12),
+        0 4px 14px rgba(0, 0, 0, 0.6);
+}
+#artwork, #artwork[hidden] { display: none; }   /* no cover art on a car radio */
+#album { display: none; }
+#title { font-weight: 800; }
+
+/* ---------- FM STEREO lamp + tuning eye ---------- */
+#label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0;                                  /* hide "NOW PLAYING"... */
+    margin-bottom: 2px;
+}
+#label::before {                                   /* ...and show the lamp with its own text */
+    content: "FM STEREO";
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: #8f8a80;
+    padding-left: 16px;
+    background: radial-gradient(circle at 5px 50%, #4a2410 0 4px, transparent 4.5px) no-repeat;
+}
+#overlay[data-playing="1"] #label::before {
+    background: radial-gradient(circle at 5px 50%, #fff2c0 0 1.5px, #ff9a2a 2.5px 4px, rgba(255, 140, 30, 0.35) 5px, transparent 8px) no-repeat;
+    color: #f5cf8a;
+}
+#label::after {
+    --wedge: calc(100deg - var(--energy, 0) * 90deg);
+    content: "";
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #050505;
+    background:
+        radial-gradient(circle, #0a140b 0 22%, transparent 24%),
+        conic-gradient(from calc(var(--wedge) / -2), #0c1a0d 0 var(--wedge), #78f58a 0);
+    box-shadow: 0 0 calc(3px + var(--energy, 0) * 10px) rgba(120, 245, 138, 0.55);
+}
+#overlay[data-playing="0"] #label::after { filter: brightness(0.45) saturate(0.5); }
+
+/* ---------- The dial (replaces the progress bar) ---------- */
+#progress {
+    position: relative;
+    height: 40px;
+    margin-top: 6px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 2px solid #050505;
+    border-radius: 4px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 45%),                                   /* glass glare */
+        /* tick marks: a big one under each number, three small ones between */
+        linear-gradient(90deg, rgba(70, 35, 8, 0.8) 0 2px, transparent 2px) 11px 100% / calc((100% - 24px) / 5) 13px repeat-x,
+        linear-gradient(90deg, rgba(70, 35, 8, 0.55) 0 1px, transparent 1px) 12px 100% / calc((100% - 24px) / 20) 7px repeat-x,
+        radial-gradient(ellipse at 50% 130%, #ffd690, #eaa64d 55%, #a9631f);                                  /* backlight */
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55), 0 0 0 2px #6d7076, 0 0 14px rgba(255, 170, 70, 0.25);
+    transition: filter 0.4s;
+}
+/* the frequency numbers, spread across the dial */
+#progress::before {
+    content: "88 92 96 100 104 108";
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 4px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 1px;
+    line-height: 1;
+    color: #4a2608;
+    text-shadow: none;
+    text-align: justify;
+    text-align-last: justify;
+}
+/* the fill becomes an invisible carrier for the needle */
+#progress-bar {
+    position: relative;
+    z-index: 1;
+    background: none;
+    transition: width 0.6s ease-out;    /* also makes the needle sweep back on a new song */
+}
+#progress-bar::after {
+    content: "";
+    position: absolute;
+    right: -1px;
+    top: 2px;
+    bottom: 2px;
+    width: 3px;
+    border-radius: 2px;
+    background: #d4180e;
+    box-shadow: 0 0 5px rgba(255, 40, 20, 0.8);
+}
+
+/* live radio and streams: no song length, so park the needle on a station */
+#overlay[data-live="1"] #progress { visibility: visible; }
+#overlay[data-live="1"] #progress-bar { width: 62% !important; }
+
+/* paused: the dial light goes dim */
+#overlay[data-playing="0"] #progress { filter: brightness(0.5) saturate(0.6); }
+
+/* ---------- Knobs: VOL on the left, TUNE on the right ---------- */
+#extra-1,
+#extra-2 {
+    display: block;
+    position: absolute;
+    top: 30px;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle, #3a3c40 0 46%, transparent 47%),                          /* center cap */
+        conic-gradient(#d8dbe0, #6f7379, #e9ecef, #7a7e84, #d8dbe0, #5f6368, #e1e4e8, #74787e, #d8dbe0); /* knurled chrome */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.7), inset 0 0 0 2px rgba(0, 0, 0, 0.35);
+}
+#extra-1 { left: 18px;  transform: rotate(calc(-30deg + var(--energy, 0) * 40deg)); transition: transform 0.1s; }
+#extra-2 { right: 18px; transform: rotate(calc(var(--progress, 0) * 300deg - 150deg)); transition: transform 0.6s ease-out; }
+
+/* the pointer line on each knob */
+#extra-1::before,
+#extra-2::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    width: 3px;
+    height: 16px;
+    margin-left: -1.5px;
+    border-radius: 2px;
+    background: #f2f2f2;
+    box-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+}
+
+/* the labels under the knobs (their own elements, so they don't spin) */
+#extra-3,
+#extra-4 {
+    display: block;
+    position: absolute;
+    top: 112px;
+    width: 76px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-align: center;
+    color: #8f8a80;
+}
+#extra-3 { left: 18px; }
+#extra-4 { right: 18px; }
+#extra-3::before { content: "VOL"; }
+#extra-4::before { content: "TUNE"; }
+
+/* ---------- Preset buttons ---------- */
+#extra-5 {
+    display: block;
+    position: absolute;
+    left: 112px;
+    right: 112px;
+    bottom: 9px;
+    height: 22px;
+    /* five chrome buttons with gaps between them */
+    background:
+        linear-gradient(180deg, #e3e6ea, #8d9197 55%, #5d6166) 0 0 / calc((100% + 8px) / 5) 100% repeat-x;
+    -webkit-mask: linear-gradient(90deg, #000 calc(100% - 8px), transparent 0) 0 0 / calc((100% + 8px) / 5) 100% repeat-x;
+            mask: linear-gradient(90deg, #000 calc(100% - 8px), transparent 0) 0 0 / calc((100% + 8px) / 5) 100% repeat-x;
+    border-radius: 3px;
+}
+#extra-5::before {
+    content: "1 2 3 4 5";
+    position: absolute;
+    inset: 0;
+    padding: 0 calc((100% + 8px) / 10 - 8px);   /* puts each number near the middle of its button */
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    line-height: 22px;
+    color: #26282b;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+    text-align: justify;
+    text-align-last: justify;
+}
+
+/* ---------- Static on a new song ---------- */
+#overlay[data-skip] #progress { animation: static-flicker 0.45s steps(1, end); }
+#overlay[data-skip] #title,
+#overlay[data-skip] #artist  { animation: static-text 0.45s steps(1, end); }
+@keyframes static-flicker {
+    0%   { filter: brightness(1.4); }
+    20%  { filter: brightness(0.6); }
+    40%  { filter: brightness(1.2); }
+    60%  { filter: brightness(0.75); }
+    80%  { filter: brightness(1.1); }
+}
+@keyframes static-text {
+    0%   { opacity: 0.2; transform: translateX(-2px); }
+    25%  { opacity: 0.8; transform: translateX(2px); }
+    50%  { opacity: 0.4; transform: translateX(-1px); }
+    75%  { opacity: 1;   transform: translateX(1px); }
+    100% { opacity: 1;   transform: none; }
+}
