@@ -500,7 +500,7 @@ function renderFavorites(rebuild = false) {
     const query = searchQuery();
     const known = allThemeNames();
     const wanted = (filter === "all" || filter === "favorites") 
-        ? [...favorites].filter(n => known.includes(n) && n.toLowerCase().includes(query))
+        ? [...favorites].filter(n => known.includes(n) && n.toLowerCase().includes(query)).sort()
         : [];
 
     if (rebuild || wanted.length === 0) clearViews(box);
@@ -536,10 +536,10 @@ function renderFavorites(rebuild = false) {
         }
     });
 
-    // add the new ones to the end
-    wanted.forEach(name => {
+    // add the new ones in alphabetical order
+    wanted.forEach((name, i) => {
         const has = [...grid.children].some(card => card.dataset.name === name);
-        if (!has) grid.appendChild(makeCard(name));
+        if (!has) grid.insertBefore(makeCard(name), grid.children[i] || null);
     });
 }
 

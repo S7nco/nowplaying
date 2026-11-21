@@ -25,9 +25,11 @@ fn list() -> &'static Mutex<Vec<String>> {
     })
 }
 
-/// The favorite theme names, in the order they were added
+/// The favorite theme names, in alphabetical order
 pub fn get() -> Vec<String> {
-    list().lock().unwrap().clone()
+    let mut names = list().lock().unwrap().clone();
+    names.sort();
+    names
 }
 
 /// Changes whenever the list changes
