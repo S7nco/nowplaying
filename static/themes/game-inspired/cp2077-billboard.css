@@ -5,7 +5,7 @@
 @font-face { font-family: 'Rajdhani'; font-weight: 700;
     src: url('/fonts/Rajdhani/Rajdhani-Bold.ttf') format('truetype'); font-display: swap; }
 @font-face { font-family: 'Rajdhani'; font-weight: 500;
-    src: url('/fonts/Rajdhani/Rajdhani-Bold.ttf') format('truetype'); font-display: swap; }
+    src: url('/fonts/Rajdhani/Rajdhani-Medium.ttf') format('truetype'); font-display: swap; }
 
 :root {
     --offset: 10px;
