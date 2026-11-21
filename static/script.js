@@ -19,9 +19,6 @@ const API = location.protocol.startsWith("http") ? location.origin : "http://loc
 // Theme from the URL (?theme=name), defaulting to "default". Letters, numbers, _ and - only.
 const theme = (params.get("theme") || "default").replace(/[^a-z0-9_-]/gi, "");
 
-// Folders searched for the theme file, in order (custom themes win over examples)
-const themeFolders = ["themes/custom/", "themes/styles/", "themes/game-inspired/", "themes/examples/"]; // looked up in this order
-
 // Gallery preview (?preview=1): popup themes stay visible, and the gallery controls play/pause
 const PREVIEW = params.get("preview") === "1";
 
@@ -108,22 +105,17 @@ window.setPreviewPaused = (paused) => {
 // ============================================================
 // Theme Loading
 // ============================================================
-function loadTheme(name) {
-    let folderIndex = 0;
-    const tryFolder = () => {
-        themeLink.href = `${themeFolders[folderIndex]}${name}.css`;
-    };
+async function loadTheme(name) {
+    let folder;
+    try {
+        const folders = await (await fetch(`${API}/themes.json`)).json();
+        folder = folders.find(f => f.themes.includes(name))?.name;
+    } catch (e) {}
+    if (!folder) { start(); return; }   //not found: a bad theme name still starts the page
 
     themeLink.addEventListener("load", start, { once: true });
-    themeLink.addEventListener("error", () => {
-        folderIndex++;
-        if (folderIndex < themeFolders.length) {
-            tryFolder();    // try the next folder
-        } else {
-            start();       // not found anywhere: bad theme name still starts the page
-        }
-    });
-    tryFolder();
+    themeLink.addEventListener("error", start, { once: true });
+    themeLink.href = `themes/${folder}/${name}.css`;
 }
 
 // Optional page background from the URL (?bg=black). Black in a browser, none inside OBS.

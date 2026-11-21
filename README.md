@@ -97,7 +97,7 @@ Add these to the overlay address, for example `http://localhost:5000/overlay.htm
 
 | Option | What it does | Example |
 |---|---|---|
-| `theme` | Picks a theme from `static/themes/examples`, `static/themes/custom`, `static/themes/game-inspired` or `static/themes/styles` | `?theme=eq` |
+| `theme` | Picks a theme from any folder in `static/themes` | `?theme=eq` |
 | `bg` | Page background color, for testing in a browser. A normal browser shows black by default. OBS is always transparent. | `?bg=gray` |
 | `scale` | Makes the whole overlay bigger or smaller | `?scale=1.5` | 
 
@@ -125,7 +125,9 @@ Themes are CSS files:
 - `static/themes/game-inspired/` holds themes inspired by games.
 - `static/themes/custom/` is for your own themes. Name the file with letters, numbers, `-` and `_` only, e.g. `my-theme.css`. 
 
-If two themes have the same name, the first one found is used in this order: custom, styles, game-inspired, examples. Every setting a theme can change, with its default, is listed in [THEMES.md](THEMES.md).
+To make a new group, add a folder in `static/themes/` (same naming rule as theme files, e.g. `retro-games`). It shows up in the Theme Gallery as its own section and filter after you refresh the page. No code changes needed.
+
+If two themes have the same name, the first one found is used: custom first, examples last, and the other folders in alphabetical order. Every setting a theme can change, with its default, is listed in [THEMES.md](THEMES.md).
 
 A new theme file shows up in the Theme Gallery after you refresh the page. Star it there to add it to the tray menu. Editing an existing theme only needs a page refresh (in OBS: right-click the browser source and choose **Refresh the cache of current page**).
 

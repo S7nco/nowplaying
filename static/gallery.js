@@ -1,7 +1,25 @@
 // Theme gallery page script (gallery.html)
 
-const LABELS = { examples: "Examples", styles: "Styles", "game-inspired": "Game Inspired", custom: "Custom" };
-let themes = {};
+const LABELS = name => name.split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+let themes = [];
+
+// Gallery shows examples first and custom last
+function galleryOrder() {
+    const rank = n => n === "examples" ? 0 : n === "custom" ? 2 : 1;
+    return [...themes].sort((a, b) => rank(a.name) - rank(b.name));
+}
+
+function addFolderChips() {
+    const fav = document.querySelector('.chip[data-filter="favorites"]');
+    for (const f of galleryOrder()) {
+        const chip = document.createElement("button");
+        chip.className = "chip";
+        chip.dataset.filter = f.name;
+        chip.textContent = LABELS(f.name);
+        fav.before(chip);
+    }
+}
+
 let filter = "all";
 
 // Preview settings
@@ -462,7 +480,7 @@ window.addEventListener("popstate", () => {
 });
 
 function allThemeNames() {
-    return [...(themes.examples || []), ...(themes.styles || []), ...(themes["game-inspired"] || []), ...(themes.custom || [])];
+    return themes.flatMap(f => f.themes);
 }
 
 function searchQuery() {
@@ -536,14 +554,14 @@ function render() {
     const sections = document.getElementById("sections");
     clearViews(sections);
 
-    for (const group of ["examples", "styles", "game-inspired", "custom"]) {
-        const all = themes[group] || [];
+    for (const folder of galleryOrder()) {
+        const group = folder.name;
         if (filter !== "all" && filter !== group) continue;
-        const names = all.filter(n => n.toLowerCase().includes(query));
+        const names = folder.themes.filter(n => n.toLowerCase().includes(query));
         if (names.length === 0 && query) continue;
 
         const title = document.createElement("h2");
-        title.textContent = `${LABELS[group]} (${names.length})`;
+        title.textContent = `${LABELS(group)} (${names.length})`;
         sections.appendChild(title);
 
         if (names.length === 0) {
@@ -568,12 +586,14 @@ document.getElementById("search").addEventListener("input", () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(render, 300);
 });
-document.querySelectorAll(".chip[data-filter]").forEach(chip => chip.addEventListener("click", () => {
+document.querySelector(".bar").addEventListener("click", e => {
+    const chip = e.target.closest(".chip[data-filter]");
+    if (!chip) return;
     document.querySelectorAll(".chip[data-filter]").forEach(c => c.classList.remove("on"));
     chip.classList.add("on");
     filter = chip.dataset.filter;
     render();
-}));
+});
 document.getElementById("playToggle").addEventListener("click", e => {
     playing = !playing;
     e.target.classList.toggle("paused", !playing);
@@ -602,7 +622,7 @@ setPreviewBg(savedBg);
 
 fetch("/themes.json")
     .then(r => r.json())
-    .then(data => { themes = data; })
+    .then(data => { themes = data; addFolderChips(); })
     .then(loadFavorites)
     .then(() => {
         render();

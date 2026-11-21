@@ -53,22 +53,23 @@ async fn spectrum(State(state): State<AppState>) -> Json<Value> {
     Json(json!({ "levels": levels }))
 }
 
+// GET /themes.json: [{ name, themes }, ...] in the order the overlay searches them
 #[derive(serde::Serialize)]
-struct Themes {
-    examples: Vec<String>,
-    styles: Vec<String>,
-    #[serde(rename = "game-inspired")]
-    game_inspired: Vec<String>,
-    custom: Vec<String>,
+struct ThemeFolder {
+    name: String,
+    themes: Vec<String>,
 }
 
-async fn themes() -> Json<Themes> {
-    axum::Json(Themes {
-        examples: themes::list("examples"),
-        styles: themes::list("styles"),
-        game_inspired: themes::list("game-inspired"),
-        custom: themes::list("custom"),
-    })
+async fn themes() -> Json<Vec<ThemeFolder>> {
+    Json(
+        themes::folders()
+            .into_iter()
+            .map(|name| ThemeFolder {
+                themes: themes::list(&name),
+                name,
+            })
+            .collect(),
+    )
 }
 
 // =============================================================================

@@ -3,8 +3,26 @@
 use std::collections::HashSet;
 use std::sync::Mutex;
 
-/// The theme folders, in the order the overlay searches them
-pub const FOLDERS: [&str; 4] = ["custom", "styles", "game-inspired", "examples"];
+/// Every folder in static/themes, in the order the overlay searches them:
+/// custom first, examples last, the rest alphabetical order
+pub fn folders() -> Vec<String> {
+    let Ok(dir) = std::fs::read_dir("static/themes") else {
+        return Vec::new();
+    };
+    let mut names: Vec<String> = dir
+        .flatten()
+        .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .filter(|name| valid_name(name))
+        .collect();
+    let rank = |name: &str| match name {
+        "custom" => 0,
+        "examples" => 2,
+        _ => 1,
+    };
+    names.sort_by(|a, b| rank(a).cmp(&rank(b)).then_with(|| a.cmp(b)));
+    names
+}
 
 /// Letters, numbers, - and _ only (the overlay strips anything else from ?theme=)
 pub fn valid_name(name: &str) -> bool {
@@ -53,5 +71,5 @@ pub fn list(folder: &str) -> Vec<String> {
 
 /// Every installed theme name, from all folders
 pub fn installed() -> Vec<String> {
-    FOLDERS.iter().flat_map(|f| list(f)).collect()
+    folders().iter().flat_map(|f| list(f)).collect()
 }
