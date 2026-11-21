@@ -86,7 +86,7 @@ Left-click the tray icon to open the Theme Gallery. Right-click it for the menu:
 | Copy Network URL | Only when `bind_address` lets other devices connect. Copies the overlay address with this PC's network address, for OBS on another computer | 
 | Open Log | Opens `nowplaying.log`, which helps when something isn't working |
 | Version | Shows which version you're running. Click it to see the releases page | 
-| Restart | Restarts the app, so `config.toml` changes are picked up. |
+| Restart | Restarts the app. Needed after changing `port` or `bind_address` |
 | Quit | Closes the app. |
 
 Hover over the icon to see the current song.
@@ -133,7 +133,7 @@ A new theme file shows up in the Theme Gallery after you refresh the page. Star 
 
 ## Configuration
 
-Copy `config.example.toml` to `config.toml` (next to `nowplaying.exe`) to change settings. Every setting is optional. The app reads the file when it starts, so restart after editing.
+Copy `config.example.toml` to `config.toml` (next to `nowplaying.exe`) to change settings. Every setting is optional. Changes are picked up within a couple of seconds while the app runs. `port` and `bind_address` need a **Restart** from the tray menu.
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -151,7 +151,7 @@ Copy `config.example.toml` to `config.toml` (next to `nowplaying.exe`) to change
 
 ## Tuning the equalizer
 
-Different music and volume settings can make the bars look too full or too flat. Adjust these in `config.toml`, then restart the app. They depend on the volume inside the player app, not the Windows volume. 
+Different music and volume settings can make the bars look too full or too flat. Adjust these in `config.toml` and save; the bars change within a couple of seconds. They depend on the volume inside the player app, not the Windows volume.
 
 | What you see | What to change |
 |---|---|

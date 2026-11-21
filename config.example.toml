@@ -1,5 +1,5 @@
 # Now Playing Overlay settings
-# The app reads this file when it starts, so restart after editing.
+# Changes are picked up within a couple of seconds. Only port and bind_address need a Restart (tray menu).
 # Any line you delete (or any line starting with #) falls back to the default shown here.
 # Use "Copy this file to config.toml" only if you got it as config.example.toml
 

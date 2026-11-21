@@ -178,6 +178,8 @@ fn main() {
     // Record that we started, and which settings and folder we're using
     log("started");
     let c = config::get();
+    // picks up changes to config.toml while the app runs
+    config::watch();
     log(&format!(
         "config: port={} floor={} ceil={} tilt={} (folder: {})",
         c.port,
