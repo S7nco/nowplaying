@@ -1,0 +1,48 @@
+/* Gradient: a smooth fixed color 
+
+    Change the four colors below to restyle it (--grad-b2 is a bridge color that stops the
+   middle from turning muddy gray when the two ends are far apart on the color wheel).
+   Some sets to try (a, b, b2, c):
+     teal to magenta (default)   #0b3b5a  #17a2b4  #5a5fc8  #c4207f
+     sunset                      #3a1450  #b8386f  #e0605a  #ff9a3c
+     ocean                       #081f4d  #1b64d6  #1f9fd8  #2ad0d0
+     violet                      #1b1146  #4a35c4  #8a4fd6  #d35fd8
+   Keep the colors medium to dark so the white text stays easy to read. */
+
+:root {
+    --grad-a: #0b3b5a;
+    --grad-b: #17a2b4;
+    --grad-b2: #5a5fc8;
+    --grad-c: #c4207f;
+    --grad-angle: 105deg;
+
+    --overlay-width: 560px;
+    --overlay-height: 150px;
+    --padding: 16px;
+    --gap: 18px;
+    --radius: 12px;
+
+    /* three layers */
+    --panel-bg: 
+        radial-gradient(ellipse 70% 120% at 12% 0%, rgba(255, 255, 255, 0.16), transparent 60%),
+        radial-gradient(ellipse 60% 100% at 100% 110%, rgba(0, 0, 0, 0.30), transparent 70%),
+        linear-gradient(var(--grad-angle), var(--grad-a) 0%, var(--grad-b) 38%, var(--grad-b2) 68%, var(--grad-c) 100%);
+
+    --font: sans-serif;
+    --text: white;
+    --text-shadow: 0 1px 6px rbga(0, 0, 0, 0.4);
+    --title-size: 30px;
+    --artist-size: 18px;
+    --album-size: 16px;
+    --secondary-opacity: 0.92;
+
+    --artwork-width: 118px;
+    --artwork-height: 118px;
+    --artwork-radius: 8px;
+    --artwork-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+
+    --bar-height: 6px;
+    --bar-radius: 3px;
+    --track: rgba(255, 255, 255, 0.28);
+    --bar-color: white;
+}
