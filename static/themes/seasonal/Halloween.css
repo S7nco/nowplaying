@@ -1,0 +1,174 @@
+/* Halloween: candle lit / Moon / Fog / Cobwebs */
+
+:root {
+    --offset: 10px;
+    --overlay-widht: 620px;
+    --overlay-height: 180px;
+
+    --font: 'Inter', sans-serif;
+    --text: #f1e4d6;
+    --text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
+    --title-color: #fff3df;
+    --title-size: 30px;
+    --artist-size: 19px;
+    --album-size: 15px;
+    --secondary-opacity: 0.82;
+
+    --panel-bg: 
+        radial-gradient(ellipse 60% 70% at 18% 105%, rgba(255, 120, 20, 0.30), transparent 70%),
+        linear-gradient(170deg, #1b1030 0%, #120a22 55%, #0a0613 100%);
+    --border: 1px solid rgba(255, 150, 60, 0.30);
+    --radius: 14px;
+    --padding: 18px 22px;
+    --gap: 18px;
+
+    --artwork-width: 134px;
+    --artwork-height: 134px;
+    --artwork-radius: 10px;
+    --artwork-border: 3px solid rgba(255, 160, 70, 0.55);
+    --artwork-shadow: 0 0 22px rgba(255, 120, 20, 0.35), 0 6px 18px rgba(0, 0, 0, 0.6);
+
+    --accent: #ff8a1f;
+    --bar-color: linear-gradient(90deg, #ff6a00, #ffc04d);
+    --track: rgba(255, 190, 120, 0.16);
+    --bar-height: 6px;
+    --bar-radius: 999px;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('/fonts/Inter/Inter-VariableFont_opsz.wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+#overlay { overflow: hidden; }
+
+/* Keep above the effects */
+#artwork, #song-info { position: relative; z-index: 4; }
+#title { font-weight: 800; }
+#progress { margin-top: 10px; box-shadow: 0 0 10px rgba(255, 130, 30, 0.35); }
+
+/* --------------- THE MMMMOOOOOOOOOOOONNNNNN --------------- */
+#extra-1 {
+    display: block;
+    position: absolute;
+    top: 9px;
+    right: 20px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 34% 38%, rgba(190, 185, 170, 0.55) 0 5px, transparent 6px),
+        /* Craters */
+        radial-gradient(circle at 64% 62%, rgba(190, 185, 170, 0.45) 0 7px, transparent 8px),
+        radial-gradient(circle at 60% 28%, rgba(190, 185, 170, 0.40) 0 3px, transparent 4px),
+        radial-gradient(circle at 40% 40%, #fff8e6, #f0e2b8 70%, #d9c58f);
+    box-shadow: 0 0 16px 4px rgba(255, 240, 200, 0.28), 0 0 54px 18px rgba(255, 220, 150, 0.10);
+}
+
+/* --------------- Fog --------------- */
+#extra-2, #extra-3 {
+    display: block;
+    position: absolute;
+    left: 0;
+    width: calc(100% + 360px);
+    pointer-events: none;
+    background-repeat: repeat-x;
+    will-change: transform;
+}
+#extra-2 {
+    bottom: -6px;
+    height: 70px;
+    z-index: 2;
+    background-image:
+        radial-gradient(ellipse 150px 28px at 50% 100%, rgba(190, 180, 215, 0.44), transparent 72%),
+        radial-gradient(ellipse 90px 20px at 22% 100%, rgba(190, 180, 215, 0.30), transparent 72%);
+    background-size: 360px 70px;
+    animation: fog-drift 38s linear infinite;
+}
+#extra-3 {
+    bottom: -10px;
+    height: 54px;
+    z-index: 3;
+    background-image:
+        radial-gradient(ellipse 120px 22px at 50% 100%, rgba(215, 205, 235, 0.24), transparent 72%),
+        radial-gradient(ellipse 90px 20px at 22% 100%, rgba(215, 205, 235, 0.16), transparent 72%);
+    background-size: 360px 54px;
+    animation: fog-drift 24s linear infinite;
+}
+
+@keyframes fog-drift { to { transform: translateX(-360px); } }
+
+/* --------------- Cobwebs ----------------- */
+#extra-4, #extra-5 {
+    display: block;
+    position: absolute;
+    top: 0;
+    width: 96px;
+    height: 96px;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0.5;
+    background:
+        repeating-conic-gradient(from 90deg at 0 0, rgba(235, 230, 245, 0.65) 0 0.6deg, transparent 0.6deg 15deg),
+        repeating-radial-gradient(circle at 0 0, transparent 0 15px, rgba(235, 230, 245, 0.4) 15px 16px);
+    -webkit-mask-image: radial-gradient(circle at 0 0, #000 0 94px, transparent 96px);
+        mask-image: radial-gradient(circle at 0 0, #000 0 94px, transparent 96px);
+}
+#extra-4 { left: 0; }
+#extra-5 { right: 0; transform: scaleX(-1); }
+
+/* --------------- Candle glow --------------- */
+#extra-6 {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: radial-gradient(ellipse 55% 65% at 14% 100%, rgba(255, 140, 40, 0.28), transparent 72%);
+    animation: candle 3.1s linear infinite;
+}
+@keyframes candle {
+    0%      { opacity: 0.95; }
+    8%      { opacity: 0.70; }
+    14%     { opacity: 1; }
+    31%     { opacity: 0.80; }
+    36%     { opacity: 0.98; }
+    52%     { opacity: 0.66; }
+    58%     { opacity: 0.90; }
+    77%     { opacity: 1; }
+    85%     { opacity: 0.74; }
+    100%    { opacity: 0.95; }
+}
+
+/* --------------- Lightning on song change --------------- */
+#extra-7 {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(180deg, rgba(205, 190, 255, 0.55), rgba(205, 190, 255, 0.12) 70%);
+}
+#overlay[data-skip] #extra-7 { animation: lightning 0.45s linear; }
+@keyframes lightning {
+    0%      { opacity: 0; }
+    10%      { opacity: 1; }
+    22%     { opacity: 0.15; }
+    34%     { opacity: 0.85; }
+    100%    { opacity: 0; }
+}
+
+/* --------------- Paused: fog stands still and candle burns low --------------- */
+#overlay[data-playing="0"] #extra-2,
+#overlay[data-playing="0"] #extra-3 { animation-play-state: paused; }
+#overlay[data-playing="0"] #extra-6 { animation: none; opacity: 0.45; }
+
+@media (prefers-reduced-motion: reduce) {
+    #extra-2, #extra-3, #extra-6 { animation: none; }
+    #overlay[data-skip] #extra-7 { animation: none; }
+}

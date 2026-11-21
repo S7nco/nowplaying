@@ -1,0 +1,189 @@
+/* Sunset theme: sun moves based on song progress */
+
+:root {
+    --offset: 10px;
+    --overlay-width: 620px;
+    --overlay-height: 180px;
+
+    --font: 'Inter', sans-serif;
+    --text: #fff7ee;
+    --text-shadow: 0 1px 8px rgba(40, 10, 40, 0.75);
+    --title-color: #ffffff;
+    --title-size: 30px;
+    --artist-size: 19px;
+    --album-size: 15px;
+    --secondary-opacity: 0.9;
+
+    --panel-bg: #2a1a4a;
+    --border: 1px solid rgba(255, 230, 200, 0.32);
+    --radius: 16px;
+    --padding: 18px 24px 38px;
+    --gap: 18px;
+
+    --artwork-width: 120px;
+    --artwork-height: 120px;
+    --artwork-radius: 12px;
+    --artwork-border: 3px solid rgba(255, 240, 225, 0.7);
+    --artwork-shadow: 0 8px 22px rgba(30, 8, 40, 0.5);
+
+    --accent: #ffd37a;
+    --bar-color: linear-gradient(90deg, #ffe3a3, #ffffff);
+    --track: rgba(255, 255, 255, 0.22);
+    --bar-height: 6px;
+    --bar-radius: 999px;
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('/fonts/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-display: swap;
+}
+ 
+#overlay { overflow: hidden; }
+ 
+/* keep the cover and text above the scenery */
+#artwork, #song-info { position: relative; z-index: 4; }
+#title { font-weight: 800; }
+
+/* ---------- The sky: a tall gradient, and --progress slides the window down it ---------- */
+#overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg,
+        #4aa8e8 0%,       /* bright afternoon */
+        #7cc4ee 12%,
+        #ffd58a 28%,      /* golden hour */
+        #ff9a4d 42%,
+        #f0546a 56%,      /* dusk */
+        #a43a8c 70%,
+        #4a2a7a 84%,      /* twilight */
+        #1a1646 100%) 0 calc(var(--progress, 0.25) * 100%) / 100% 520% no-repeat;
+    transition: background-position 0.8s ease-out;
+}
+ 
+/* a gentle shade on the left so the text stays readable in the bright part of the song */
+#overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(30, 10, 50, 0.38), rgba(30, 10, 50, 0.08) 65%, transparent);
+}
+ 
+/* ---------- Stars: fade in over the last stretch of the song ---------- */
+#extra-1 {
+    display: block;
+    position: absolute;
+    inset: 0 0 34px 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: clamp(0, calc((var(--progress, 0) - 0.55) * 2.6), 1);
+    transition: opacity 0.8s ease-out;
+    background:
+        radial-gradient(circle at 12% 18%, #fff 0 1px, transparent 1.6px),
+        radial-gradient(circle at 34% 8%,  #fff 0 1.2px, transparent 1.8px),
+        radial-gradient(circle at 58% 22%, #fff 0 1px, transparent 1.6px),
+        radial-gradient(circle at 76% 10%, #fff 0 1.4px, transparent 2px),
+        radial-gradient(circle at 90% 26%, #fff 0 1px, transparent 1.6px),
+        radial-gradient(circle at 66% 38%, #fff 0 0.8px, transparent 1.4px),
+        radial-gradient(circle at 22% 42%, #fff 0 0.8px, transparent 1.4px),
+        radial-gradient(circle at 48% 46%, #fff 0 1px, transparent 1.6px);
+}
+ 
+/* ---------- The sun: sinks toward the sea as the song plays ---------- */
+#extra-2 {
+    display: block;
+    position: absolute;
+    right: 56px;
+    bottom: calc(112px - var(--progress, 0.25) * 130px);      /* from high in the sky to below the horizon */
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    z-index: 2;
+    pointer-events: none;
+    background: radial-gradient(circle at 40% 38%, #fffbe8, #ffe08a 55%, #ffb347);
+    box-shadow: 0 0 26px 10px rgba(255, 200, 110, 0.5), 0 0 80px 34px rgba(255, 150, 80, 0.25);
+    transition: bottom 0.8s ease-out;
+}
+ 
+/* ---------- The sea ---------- */
+#extra-3 {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 34px;
+    z-index: 3;
+    pointer-events: none;
+    background: linear-gradient(180deg, #2a2a6a, #14123e);
+    box-shadow: 0 -1px 0 rgba(255, 200, 150, 0.35);
+}
+/* the sun's reflection: a column of light on the water, the same position as the sun */
+#extra-4 {
+    display: block;
+    position: absolute;
+    right: 56px;
+    bottom: 0;
+    width: 54px;
+    height: 34px;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+    background: repeating-linear-gradient(180deg, rgba(255, 215, 140, 0.8) 0 2px, transparent 2px 6px);
+    -webkit-mask-image: linear-gradient(180deg, #000, transparent);
+            mask-image: linear-gradient(180deg, #000, transparent);
+    animation: sea-shimmer 2.6s ease-in-out infinite;
+}
+/* small waves drifting across the sea */
+#extra-5 {
+    display: block;
+    position: absolute;
+    left: 0;
+    width: calc(100% + 82px);
+    bottom: 0;
+    height: 34px;
+    z-index: 3;
+    pointer-events: none;
+    background: repeating-linear-gradient(100deg, transparent 0 34px, rgba(255, 255, 255, 0.10) 34px 36px, transparent 36px 80px);
+    animation: waves 9s linear infinite;
+    will-change: transform;
+}
+@keyframes sea-shimmer {
+    0%, 100% { transform: scaleX(1);    opacity: 0.9; }
+    50%      { transform: scaleX(0.72); opacity: 0.6; }
+}
+@keyframes waves { to { transform: translateX(-81.23px); } }   /* 80px along the 100deg angle = 81.23px across */
+ 
+/* ---------- Glint on a new song ---------- */
+#extra-6 {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 230, 180, 0.4) 50%, transparent 65%)
+        -150% 0 / 60% 100% no-repeat;
+}
+#overlay[data-skip] #extra-6 { animation: glint 0.45s ease-out; }
+@keyframes glint {
+    from { opacity: 1; background-position: -150% 0; }
+    to   { opacity: 1; background-position: 250% 0; }
+}
+ 
+/* ---------- Paused: the water goes still ---------- */
+#overlay[data-playing="0"] #extra-4,
+#overlay[data-playing="0"] #extra-5 { animation-play-state: paused; }
+ 
+@media (prefers-reduced-motion: reduce) {
+    #extra-4, #extra-5 { animation: none; }
+    #overlay[data-skip] #extra-6 { animation: none; }
+    #overlay::before, #extra-1, #extra-2 { transition: none; }
+}
