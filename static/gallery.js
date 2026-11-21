@@ -10,13 +10,19 @@ function galleryOrder() {
 }
 
 function addFolderChips() {
-    const fav = document.querySelector('.chip[data-filter="favorites"]');
+    const sep = document.querySelector(".filters .sep");
     for (const f of galleryOrder()) {
         const chip = document.createElement("button");
         chip.className = "chip";
         chip.dataset.filter = f.name;
         chip.textContent = LABELS(f.name);
-        fav.before(chip);
+
+        const n = document.createElement("span");
+        n.className = "n";
+        n.textContent = f.themes.length;
+        chip.appendChild(n);
+
+        sep.before(chip);
     }
 }
 
@@ -586,7 +592,7 @@ document.getElementById("search").addEventListener("input", () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(render, 300);
 });
-document.querySelector(".bar").addEventListener("click", e => {
+document.querySelector(".filters").addEventListener("click", e => {
     const chip = e.target.closest(".chip[data-filter]");
     if (!chip) return;
     document.querySelectorAll(".chip[data-filter]").forEach(c => c.classList.remove("on"));
