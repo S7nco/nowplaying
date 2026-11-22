@@ -4,7 +4,7 @@
 // - Changes (anything but GET/HEAD) only from this PC, even when bind_address lets other devices connect
 
 use axum::extract::{ConnectInfo, Request};
-use axum::http::{Method, StatusCode, header};
+use axum::http::{HeaderValue, Method, StatusCode, header};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use std::net::{IpAddr, SocketAddr};
@@ -41,7 +41,30 @@ pub async fn guard(
     if changes && !peer.ip().is_loopback() {
         return refuse("Changes can only be made on the PC running Now Playing");
     }
-    next.run(req).await
+    let mut response = next.run(req).await;
+    if let Ok(policy) = HeaderValue::from_str(&content_policy(&host)) {
+        response
+            .headers_mut()
+            .insert(header::CONTENT_SECURITY_POLICY, policy);
+    }
+    response
+}
+
+/// What pages may load: only this app's own files, so a theme can't contact other websites.
+/// Other ports on this host are allowed because the Restart button may have to find a new port.
+fn content_policy(host: &str) -> String {
+    let name = host_name(host);
+    // CSP can't write IPv6 addresses like ::1, so those only get 'self'
+    let connect = if name.contains(':') {
+        "'self'".to_string()
+    } else {
+        format!("'self' http://{name}:* ws://{name}:*")
+    };
+    format!(
+        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; \
+        font-src 'self' data:; connect-src {connect}; frame-src 'self'; frame-ancestors 'self'; \
+        base-uri 'none'; form-action 'none'"
+    )
 }
 
 fn refuse(why: &'static str) -> Response {
@@ -80,8 +103,8 @@ fn host_allowed(host: &str) -> bool {
         }
     }
     // Any other names the user listed in config.toml
-    crate::config::get()
-        .allowed_hosts
-        .iter()
-        .any(|allowed| !allowed.is_empty() && name.eq_ignore_ascii_case(allowed))
+    crate::config::get().allowed_hosts.iter().any(|allowed| {
+        let allowed = host_name(allowed);
+        !allowed.is_empty() && name.eq_ignore_ascii_case(allowed)
+    })
 }

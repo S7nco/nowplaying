@@ -190,5 +190,4 @@ The overlay sets *--energy* (0 to 1, the bass level). Use it to make a glow puls
 
 ## Using themes from other people
 
-A theme is a CSS file, and CSS can load images and fonts from anywhere on the internet.
-A theme that does this makes the overlay contact the website every time it loads, which tells the website your IP address and when you're streaming. Before using a theme from someone else, open it in a text editor and look for `http://` or `https://`. Fonts and images in the theme's own folder, or in `static/fonts`, are fine.
+Now Playing only lets themes load files from the app itself, so a theme can't contact other websites. Images and fonts from `http://` or `https://` addresses won't load. Put them in `static/fonts` or another folder under `static`, and link to them with a path like `/fonts/MyFont/MyFont-Bold.ttf`.
