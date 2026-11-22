@@ -12,10 +12,11 @@ serves the overlay as a local web page, and ships with themes, an audio equalize
 ## Features
 
 - Song title, artist, album, cover art, and a progress bar with optional elapsed / total time
-- Works with the Apple Music app for Windows and the Spotify desktop app, and follows whichever one is playing
+- Works with the Apple Music app for Windows and the Spotify desktop app, and follows whichever one is playing. Other media apps can be added in Settings
 - Live equalizer and music-reactive glows, driven by the player's audio
 - Popup mode: appears when the song changes, then fades out
-- A Theme Gallery to preview every theme, with search, filters, favorites and test backgrounds. Click a theme to see it bigger, with the exact OBS size
+- A Theme Gallery to preview every theme, with search, folder and feature filters, favorites and test backgrounds. Click a theme to see it bigger, with the exact OBS size
+- A Settings page for the equalizer, players, network and starting with Windows, with no files to edit
 - Themes are plain CSS files. Examples are included, and you can make your own ([how to make a theme](THEMES.md))
 - Runs quietly in the system tray, with a status line showing the current song
 - Written in Rust. Uses a few MB of memory and almost no CPU
@@ -42,13 +43,15 @@ To try another theme, change the address, for example, `http://localhost:5000/ov
 
 Windows may warn you ("Windows protected your PC") because the app is not code-signed. Choose **More info > Run anyway**. To avoid the warning, right-click the zip before unzipping it, choose **Properties**, tick **Unblock**, and click **OK**. The full source is in this repository. 
 
-To start the app with Windows, press Win+R, type `shell:startup`, and put a shortcut to `nowplaying.exe` in the folder that opens.
+To start the app with Windows, turn on **Start with Windows** in the tray menu or in Settings.
 
 ### Updating
 
 Quit the app from the tray, then unzip the new release to the same place as before, so its `NowPlaying` folder lands on top of your old one. Choose **Replace** when Windows asks. Your `config.toml`, `favorites.json` and custom themes are not in the zip, so they stay as they are.
 
 If you unzip into a new folder instead, copy `config.toml`, `favorites.json` and `static\themes\custom` over from the old one. If you forget `favorites.json`, open the Theme Gallery once and it copies the stars saved in your browser back into the app.
+
+If you use **Start with Windows** and move the app to a new folder, open Settings and turn it on again so it points to the new location.
 
 ### Spotify
 
@@ -58,7 +61,7 @@ In Spotify, open Settings and turn on **Show desktop overlay when using media ke
 
 Open `http://localhost:5000/gallery.html`, or left-click the tray icon, to see every theme running.
 
-- Search and filter themes by group
+- Search themes, filter by folder, and use the **Includes** row to find themes with specific features. Picking several shows only themes that have all of them
 - Click **Open** to open a theme, or **Copy URL** to paste it into OBS
 - Click a preview to enlarge it. The enlarged view shows the theme's OBS browser source size, its URL, and a scale control (1x, 1.5x, 2x) that updates both. Popup themes get a **Replay popup** button
 - Each card shows the theme's OBS size (width x height), including any room it needs for glows
@@ -71,6 +74,19 @@ Your favorites also appear in the tray menu, under **Open in Browser** and **Cop
 
 <img src="docs/enlarged-view.png" alt="Enlarged View" width="800">
 
+## Settings
+
+Right-click the tray icon and choose **Settings**, or open `http://localhost:5000/settings.html`. Changes are saved to `config.toml` as you make them, and your comments in that file are kept.
+
+- **Equalizer:** adjust the bars while watching them move to your music
+- **Players:** add or remove players. **Detected Right Now** lists the media apps Windows can see, each with an **Add** button
+- **Network:** choose who can connect, change the port, and add other names for this PC. If a change needs a restart, a **Restart Now** button appears
+- **Startup:** start Now Playing when you sign in to Windows
+
+Other devices can view this page, but settings can only be changed on the PC running Now Playing.
+
+<img src="docs/settings.png" alt="Settings page" width="800">
+
 ## The tray menu
 
 Left-click the tray icon to open the Theme Gallery. Right-click it for the menu:
@@ -81,12 +97,14 @@ Left-click the tray icon to open the Theme Gallery. Right-click it for the menu:
 |---|---|
 | Status line | Shows the current song and whether it is playing or paused. Reads "No Song Detected" when a player is open but idle, and "Application Not Running" when none is open |
 | Theme Gallery | Opens the Theme Gallery in your browser |
+| Settings | Opens the Settings page |
 | Open in Browser | Opens the overlay in one of your favorite themes |
 | Copy URL | Copies the overlay address for one of your favorite themes |
 | Copy Network URL | Only when `bind_address` lets other devices connect. Copies the overlay address with this PC's network address, for OBS on another computer | 
+| Start with Windows | Turns starting at sign-in on or off. A checkmark shows when it's on |
 | Open Log | Opens `nowplaying.log`, which helps when something isn't working |
 | Version | Shows which version you're running. Click it to see the releases page | 
-| Restart | Restarts the app. Needed after changing `port` or `bind_address` |
+| Restart | Restarts the app. Needed after changing the port or who can connect |
 | Quit | Closes the app. |
 
 Hover over the icon to see the current song.
@@ -123,6 +141,7 @@ Themes are CSS files:
 - `static/themes/examples/` holds the example themes. Each one shows off a single feature (equalizer, popup mode, time display, blurred cover background, artwork size, and so on).
 - `static/themes/styles/` holds finished styles.
 - `static/themes/game-inspired/` holds themes inspired by games.
+- `static/themes/seasonal/` holds seasonal themes.
 - `static/themes/custom/` is for your own themes. Name the file with letters, numbers, `-` and `_` only, e.g. `my-theme.css`. 
 
 To make a new group, add a folder in `static/themes/` (same naming rule as theme files, e.g. `retro-games`). It shows up in the Theme Gallery as its own section and filter after you refresh the page. No code changes needed.
@@ -133,7 +152,7 @@ A new theme file shows up in the Theme Gallery after you refresh the page. Star 
 
 ## Configuration
 
-Copy `config.example.toml` to `config.toml` (next to `nowplaying.exe`) to change settings. Every setting is optional. Changes are picked up within a couple of seconds while the app runs. `port` and `bind_address` need a **Restart** from the tray menu.
+Most settings can be changed on the [Settings](#settings) page. To edit them by hand, copy `config.example.toml` to `config.toml` (next to `nowplaying.exe`). Every setting is optional. Changes are picked up within a couple of seconds while the app runs. `port` and `bind_address` need a **Restart**.
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -151,7 +170,7 @@ Copy `config.example.toml` to `config.toml` (next to `nowplaying.exe`) to change
 
 ## Tuning the equalizer
 
-Different music and volume settings can make the bars look too full or too flat. Adjust these in `config.toml` and save; the bars change within a couple of seconds. They depend on the volume inside the player app, not the Windows volume.
+Different music and volume settings can make the bars look too full or too flat. The easiest way to tune them is the **Equalizer** section in Settings, where the bars move as you drag the sliders. You can also edit these values in `config.toml`. The bars depend on the volume inside the player app, not the Windows volume.
 
 | What you see | What to change |
 |---|---|
@@ -166,10 +185,10 @@ Change one value at a time, by about 5 for the floor and ceiling and by about 0.
 ## Troubleshooting
 - **The overlay is blank.** Check that a player is playing, and look at the tray status line to see what the app detects.
 - **Spotify isn't detected.** In Spotify, turn on **Show desktop overlay when using media keys**, then restart Spotify. Make sure it's the desktop app, since the web player in a browser shows up under the browser's name.
-- **The equalizer doesn't move.** Check that `process_name` in `config.toml` matches the players' process name in Task Manager (Details tab). Restart the app after the player updates.
-- **The port is already in use.** Another program is using port 5000. Change the `port` in `config.toml`.
+- **The equalizer doesn't move.** In Settings > Players, check that the process name matches the player in Task Manager (Details tab). Restart the app after the player updates.
+- **The port is already in use.** Another program is using port 5000. Change the port in Settings > Network and click **Restart Now**. If the app can't start, change `port` in `config.toml`.
 - **A new theme isn't showing.** Refresh the Theme Gallery page. Check the file name uses only letters, numbers, `-` and `_`, and that Windows isn't hiding the extension and naming it `mytheme.css.txt`. Skipped themes are listed in `nowplaying.log`.
-- **The overlay doesn't load from another PC or phone.** Set `bind_address = "0.0.0.0"` in `config.toml`, restart the app, and use the PC's network address (see Network Note) instead of `localhost`.
+- **The overlay doesn't load from another PC or phone.** In Settings > Network, choose **Other devices on my network too**, click **Restart Now**, and use the address shown there instead of `localhost`.
 - **Something else is wrong.** Look at `nowplaying.log` next to the exe. If the app closed by itself, the previous run's log is in `nowplaying.old.log`.
 
 ## Reporting problems and ideas
@@ -191,23 +210,26 @@ Now Playing runs entirely on your PC. It doesn't send anything to the internet: 
 - `favorites.json`: your favorite themes
 - `nowplaying.log` and `nowplaying.old.log`: what the app did. They don't contain your Windows user name or song titles, but check them before posting them anywhere.
 - `static\cover.jpg`: the current song's cover, for the overlay
+- **Start with Windows**, if you turn it on, adds a `NowPlaying` entry to your Windows startup list in the registry. Turning it off removes it.
 
 The Theme Gallery also remembers your favorites and preview background in your browser.
 
 **Who can connect.** By default, only this PC. Other websites open in your browser can't read what you're playing or change anything. With `bind_address = "0.0.0.0"`, other devices on your network can view the overlay and gallery, but only this PC can change anything (see Network Note).
 
-Themes can load fonts or images from the internet if their CSS says so. The included themes don't (check before using a theme from someone else; see [THEMES.md](THEMES.md)).
+Themes can only load files from the app itself, so a theme can't contact other websites (see [THEMES.md](THEMES.md)).
+
+If a website tries to reach Now Playing, your browser may ask whether to allow access to devices on your network. Unless you trust that site and expected the request, decline it. The Settings page and gallery don't need this permission.
 
 ## Network Note
 
-By default the overlay server only accepts connections from the same PC (`bind_address = "127.0.0.1"`), so nothing else on your network can reach it. If OBS runs on another computer (a second streaming PC), or you want to open the gallery from a phone, add this to `config.toml` and restart the app: 
+By default the overlay server only accepts connections from the same PC, so nothing else on your network can reach it. If OBS runs on another computer (a second streaming PC), or you want to open the gallery from a phone, go to **Settings > Network**, choose **Other devices on my network too**, and click **Restart Now**. In `config.toml`, the same setting is:
 ```
 bind_address = "0.0.0.0"
 ```
 
-Then right-click the tray icon and use **Copy Network URL**: it copies the overlay address with your PC's network address instead of `localhost`, ready to paste into OBS on another computer. To type it yourself, run `ipconfig` in the terminal and look for **IPv4 Address** to find it, e.g. `http://192.168.1.21:5000/overlay.html`. Windows may ask to allow network access the first time: allow **Private networks**. The app does not send any data to the internet.
+Settings then shows the address to use. You can also right-click the tray icon and use **Copy Network URL**, which copies the overlay address ready to paste into OBS on another computer. To type it yourself, run `ipconfig` in the terminal and look for **IPv4 Address** to find it, e.g. `http://192.168.1.21:5000/overlay.html`. Windows may ask to allow network access the first time: allow **Private networks**. The app does not send any data to the internet.
 
-You can also use the PC's name instead of its address, e.g. `http://DESKTOP-ABC:5000/overlay.html`. If your network adds something to the name (like `desktop-abc.lan`), add it to `allowed_hosts` in `config.toml`.
+You can also use the PC's name instead of its address, e.g. `http://DESKTOP-ABC:5000/overlay.html`. If your network adds something to the name (like `desktop-abc.lan`), add it under **Other names for this PC** in Settings.
 
 ## Building from Source
 
@@ -217,7 +239,7 @@ You need [Rust](https://rustup.rs) (a recent version: the project uses the 2024 
 cargo build --release
 ```
 
-The program is created at `target\release\nowplaying.exe`. It needs the `static` folder and `icon.ico`, and finds them in the project folder. To make a release zip yourself run `package.ps1`.
+The program is created at `target\release\nowplaying.exe`. It needs the `static` folder and `icon.ico`, and finds them in the project folder. **Start with Windows** only works from a packaged copy, which has `static` next to the exe. To make a release zip yourself, run `package.ps1`.
 
 ## Credit and License
 

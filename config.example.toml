@@ -1,7 +1,7 @@
 # Now Playing Overlay settings
 # Changes are picked up within a couple of seconds. Only port and bind_address need a Restart (tray menu).
 # Any line you delete (or any line starting with #) falls back to the default shown here.
-# Use "Copy this file to config.toml" only if you got it as config.example.toml
+# Most settings can also be changed on the Settings page (tray menu > Settings).
 
 # Who can connect to the overlay.
 # "127.0.0.1" only allows this PC. (default)
