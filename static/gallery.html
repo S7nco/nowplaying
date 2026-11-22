@@ -10,23 +10,32 @@
     <h1>Theme Gallery</h1>
     <p class="sub">Pick a theme, then copy its link into an OBS browser source. Previews show your current song.</p>
 
-    <div class="bar">
-        <input id="search" type="search" placeholder="Search themes">
-        <button id="playToggle" class="chip">Playing</button>
-        <span class="swatches" title="Preview Background">
-            <button class="sw" data-bg="dark" title="Dark"></button>
-            <button class="sw" data-bg="black" title="Black"></button>
-            <button class="sw" data-bg="white" title="White"></button>
-            <button class="sw" data-bg="green" title="Green"></button>
-            <button class="sw" data-bg="checker" title="Checker"></button>
-        </span>
+    <div class="toolbar">
+        <div class="bar">
+            <input id="search" type="search" placeholder="Search themes">
+            <button id="playToggle" class="chip">Playing</button>
+            <span class="swatches" title="Preview Background">
+                <button class="sw" data-bg="dark" title="Dark"></button>
+                <button class="sw" data-bg="black" title="Black"></button>
+                <button class="sw" data-bg="white" title="White"></button>
+                <button class="sw" data-bg="green" title="Green"></button>
+                <button class="sw" data-bg="checker" title="Checker"></button>
+            </span>
+        </div>
+        <div class="filter-row">
+            <span class="filter-label">Show</span>
+            <div class="bar filters">
+                <button class="chip on" data-filter="all">All</button>
+                <button class="chip" data-filter="favorites">★ Favorites</button>
+                <span class="sep"></span>
+            </div>
+        </div>
+        <div class="filter-row">
+            <span class="filter-label">Includes</span>
+            <div class="bar tag-filters" id="tagFilters"></div>
+        </div>
+        <div class="count" id="count"></div>
     </div>
-    <div class="bar filters">
-        <button class="chip on" data-filter="all">All</button>
-        <span class="sep"></span>
-        <button class="chip" data-filter="favorites">★ Favorites</button>
-    </div>
-    <div class="count" id="count"></div>
     <div id="favorites"></div>
     <div id="sections"></div>
     

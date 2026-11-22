@@ -10,7 +10,7 @@ function galleryOrder() {
 }
 
 function addFolderChips() {
-    const sep = document.querySelector(".filters .sep");
+    const row = document.querySelector(".filters");
     for (const f of galleryOrder()) {
         const chip = document.createElement("button");
         chip.className = "chip";
@@ -22,7 +22,7 @@ function addFolderChips() {
         n.textContent = f.themes.length;
         chip.appendChild(n);
 
-        sep.before(chip);
+        row.append(chip);
     }
 }
 
@@ -225,8 +225,7 @@ function whenReady (frame, view) {
 }
 
 // Works out what theme includes by asking the page inside the frame, so the list never goes stale
-function showTags(frame, view) {
-    if (!frame.isConnected) return;
+function readTags(frame) {
     const win = frame.contentWindow;
     const doc = frame.contentDocument;
     // Does the theme show this element? (hidden elements are still in the DOM, but not visible)
@@ -250,9 +249,13 @@ function showTags(frame, view) {
     if(shown("time")) tags.push("time");
     if(shown("album")) tags.push("album");
     if(shown("line")) tags.push("one line");
+    return tags;
+}
 
+function showTags(frame, view) {
+    if (!frame.isConnected) return;
     const box = view.parentElement.querySelector(".tags");
-    box.replaceChildren(box.querySelector(".size"), ...tags.map(t => 
+    box.replaceChildren(box.querySelector(".size"), ...readTags(frame).map(t => 
         el("span", { className: "tag" }, t)));
 }
 
@@ -493,14 +496,94 @@ function searchQuery() {
     return document.getElementById("search").value.trim().toLowerCase();
 }
 
+// ======================================
+// Tag Filters
+// ======================================
+
+const themeTags = new Map();    // theme name -> its tags, filled in by scanTags
+const activeTags = new Set();   // the tag chips that are on
+const tagBar = document.getElementById("tagFilters");
+
+// Does this theme fit the search box and every selected tag?
+function matches(name) {
+    if (!name.toLowerCase().includes(searchQuery())) return false;
+    const tags = themeTags.get(name) || [];
+    return [...activeTags].every(t => tags.includes(t));
+}
+
+// Loads one theme off-screen and reads its tags. A theme that doesn't start in time gets none
+function scanTheme(name) {
+    return new Promise(resolve => {
+        const frame = el("iframe", { className: "scan-frame", tabIndex: -1 });
+        frame.setAttribute("aria-hidden", "true");
+        frame.src = `overlay.html?theme=${encodeURIComponent(name)}&bg=transparent&preview=1`;
+        const finish = () => {
+            clearTimeout(timer);
+            let tags = [];
+            try { tags = readTags(frame); } catch {}
+            frame.remove();
+            resolve(tags);
+        };
+        const timer = setTimeout(finish, 4000);
+        frame.addEventListener("load", () => {
+            const win = frame.contentWindow;
+            if (win.overlayReady) finish();
+            else win.addEventListener("overlay-ready", finish, { once: true });
+        }, { once: true });
+        document.body.appendChild(frame);
+    });
+}
+
+// One theme at a time, so the page stays responsive
+async function scanTags() {
+    const names = [...new Set(allThemeNames())];
+    for (let i = 0; i < names.length; i++) {
+        tagBar.replaceChildren(el("span", { className: "tag-status" },
+            `Checking themes for filters: ${i + 1} of ${names.length}`));
+        themeTags.set(names[i], await scanTheme(names[i]));
+    }
+    showTagChips();
+}
+
+function showTagChips() {
+    const counts = new Map();
+    for (const tags of themeTags.values()) {
+        tags.forEach(t => counts.set(t, (counts.get(t) || 0) + 1));
+    }
+
+    const clear = el("button", { className: "chip", hidden: true }, "Clear");
+    const chips = [...counts.keys()].sort().map(tag => {
+        const chip = el("button", { className: "chip" }, tag, el("span", { className: "n" }, counts.get(tag)));
+        chip.setAttribute("aria-pressed", "false");
+        chip.addEventListener("click", () => {
+            if (activeTags.has(tag)) activeTags.delete(tag); else activeTags.add(tag);
+            chip.classList.toggle("on", activeTags.has(tag));
+            chip.setAttribute("aria-pressed", activeTags.has(tag));
+            clear.hidden = activeTags.size === 0;
+            render();
+        });
+        return chip;
+    });
+
+    clear.addEventListener("click", () => {
+        activeTags.clear();
+        chips.forEach(chip => {
+            chip.classList.remove("on");
+            chip.setAttribute("aria-pressed", "false");
+        });
+        clear.hidden = true;
+        render();
+    });
+    tagBar.replaceChildren(...chips, clear);
+}
+
 // The Favorites section at the top. Cards that are already there stay as they are,
 // so adding or removing one doesn't reload the others.
 function renderFavorites(rebuild = false) {
     const box = document.getElementById("favorites");
-    const query = searchQuery();
     const known = allThemeNames();
     const wanted = (filter === "all" || filter === "favorites") 
-        ? [...favorites].filter(n => known.includes(n) && n.toLowerCase().includes(query)).sort()
+        ? [...favorites].filter(n => known.includes(n) && matches(n)).sort()
         : [];
 
     if (rebuild || wanted.length === 0) clearViews(box);
@@ -563,8 +646,8 @@ function render() {
     for (const folder of galleryOrder()) {
         const group = folder.name;
         if (filter !== "all" && filter !== group) continue;
-        const names = folder.themes.filter(n => n.toLowerCase().includes(query));
-        if (names.length === 0 && query) continue;
+        const names = folder.themes.filter(n => matches(n));
+        if (names.length === 0 && (query || activeTags.size > 0)) continue;
 
         const title = document.createElement("h2");
         title.textContent = `${LABELS(group)} (${names.length})`;
@@ -632,6 +715,7 @@ fetch("/themes.json")
     .then(loadFavorites)
     .then(() => {
         render();
+        setTimeout(scanTags, 1500);     // after the first previews have had a chance to load
         // gallery.html#name opens that theme
         const name = location.hash.slice(1);
         if (name && allThemeNames().includes(name)) {
