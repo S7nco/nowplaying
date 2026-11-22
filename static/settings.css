@@ -1,4 +1,5 @@
 /* Settings page (settings.html). Colors, fonts, and buttons come from gallery.css */
+[hidden] { display: none !important; }
 
 body { max-width: 760px; margin: 0 auto; }
 a { color: var(--accent); }
@@ -20,7 +21,8 @@ a { color: var(--accent); }
 }
 
 /* Live equalizer bars */
-.bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin-bottom: 16px; padding: 10px; border-radius: 8px; background: #0c0e13; }
+.bars { display: flex; align-items: flex-end; gap: 6px; height: 120px;
+    margin-bottom: 16px; padding: 10px; border-radius: 8px; background: #0c0e13; }
 .bars span { flex: 1; height: 0; border-radius: 3px 3px 0 0; background: var(--accent); transition: height 0.08s linear; }
 
 /* A slider row: label, slider, value */
@@ -43,7 +45,13 @@ a { color: var(--accent); }
 .player-head, .player { display: grid; grid-template-columns: 1fr 1fr 32px; gap: 8px; align-items: center; }
 .player-head { margin-bottom: 4px; color: var(--muted); font-size: 12px; }
 .player { margin-bottom: 6px; }
-.player input { width: 100%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: inherit; font: inherit; font-size: 13px; }
+.player input, .host input, .field input { 
+    width: 100%; padding: 6px 10px; 
+    border: 1px solid var(--line); 
+    border-radius: 6px; 
+    background: var(--bg); 
+    color: inherit; font: inherit; 
+    font-size: 13px; }
 .player input.missing { border-color: #a05050; }
 
 h3 { margin: 18px 0 6px; color: var(--muted); font-size: 13px; font-weight: 600; }
@@ -55,3 +63,14 @@ h3 { margin: 18px 0 6px; color: var(--muted); font-size: 13px; font-weight: 600;
 .detected code { flex: 1; overflow-wrap: anywhere; }
 .badge { padding: 2px 8px; border-radius: 10px; background: var(--hover); color: var(--subtle); font-size: 11px; }
 .badge.on { color: #8fdcaa; }
+
+/* Network */
+.choice { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; cursor: pointer; }
+.choice input { margin-top: 4px; }
+.choice small, .field small { display: block; color: var(--muted); font-size: 12px; }
+.field { display: grid; grid-template-columns: 1fr 110px; align-items: center; gap: 12px; margin: 14px 0; }
+.host { display: grid; grid-template-columns: 1fr 32px; gap: 8px; align-items: center; margin-bottom: 6px; }
+.restart { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; 
+    padding: 10px 12px; border: 1px solid var(--accent-line); border-radius: 8px; background: var(--accent-bg);
+    color: var(--accent); font-size: 13px; }
+.restart button:disabled { opacity: 0.6; cursor: default; }

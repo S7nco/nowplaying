@@ -37,7 +37,9 @@ fn state() -> Value {
         "defaults": Config::default(),
         "restart_needed": restart_needed,
         "unknown": unknown,
-        "error": error
+        "error": error,
+        // What other devices open, or null when only this PC can connect (uses the running settings)
+        "network_url": crate::tray::network_host().map(|h| crate::tray::overlay_url(&h, "default")),
     })
 }
 
@@ -136,6 +138,7 @@ fn write(changes: &Map<String, Value>) -> std::io::Result<()> {
     let text = std::fs::read_to_string(config::FILE).unwrap_or_default();
     let mut doc: toml_edit::DocumentMut = text.parse().map_err(std::io::Error::other)?;
     let defaults = toml::Table::try_from(Config::default()).unwrap_or_default();
+    let mut missing = Vec::new(); // settings not in the file yet: (name, "name = value")
     for (name, value) in changes {
         // numbers with decimals stay that way in the file ("-30.0", not "-30")
         let decimal = matches!(defaults.get(name), Some(toml::Value::Float(_)));
@@ -149,13 +152,39 @@ fn write(changes: &Map<String, Value>) -> std::io::Result<()> {
                 *old = new;
                 *old.decor_mut() = decor;
             }
-            // not in the file yet (or only as a # comment): added at the end
-            None => {
-                doc.insert(name, toml_edit::Item::Value(new));
-            }
+            None => missing.push((name.clone(), format!("{name} = {}", new.to_string().trim()))),
         }
     }
-    crate::files::write_atomic(config::FILE, doc.to_string().as_bytes())
+    let mut out = doc.to_string();
+    for (name, line) in &missing {
+        out = insert_line(&out, name, line);
+    }
+    // Make sure the result still reads back correctly before saving it
+    out.parse::<toml::Table>().map_err(std::io::Error::other)?;
+    crate::files::write_atomic(config::FILE, out.as_bytes())
+}
+
+/// Puts a new setting's line right after the last "# name = ..." comment, so it lands next to its
+/// explanation (and the examples stay as they are). No such comment: it goes at the end.
+fn insert_line(text: &str, name: &str, line: &str) -> String {
+    let newline = if text.contains("\r\n") { "\r\n" } else { "\n" };
+    let is_comment_for = |l: &&str| {
+        l.trim_start()
+            .strip_prefix('#')
+            .and_then(|rest| rest.trim_start().strip_prefix(name))
+            .is_some_and(|rest| rest.trim_start().starts_with('='))
+    };
+    let mut lines: Vec<&str> = text.lines().collect();
+    match lines.iter().rposition(is_comment_for) {
+        Some(i) => lines.insert(i + 1, line),
+        None => {
+            if lines.last().is_some_and(|l| !l.trim().is_empty()) {
+                lines.push("");
+            }
+            lines.push(line);
+        }
+    }
+    lines.join(newline) + newline
 }
 
 fn to_toml(value: &Value, decimal: bool) -> Option<toml_edit::Value> {

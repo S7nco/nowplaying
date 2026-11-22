@@ -6,6 +6,10 @@ const eqStatus = document.getElementById("eq-status");
 const playersEl = document.getElementById("players");
 const playersStatus = document.getElementById("players-status");
 const detectedEl = document.getElementById("detected");
+const netStatus = document.getElementById("network-status");
+const hostsEl = document.getElementById("hosts");
+const portBox = document.getElementById("port");
+const restartBox = document.getElementById("restart-box");
 let defaults = {};
 
 // Makes an element: el("span", { className: "badge" }, "Playing")
@@ -29,6 +33,9 @@ async function load() {
     defaults = state.defaults || {};
     EQ.forEach(name => setSlider(name, state.settings[name]));
     renderPlayers(state.settings);
+    setNetworkInputs(state.settings);
+    hostsEl.replaceChildren();
+    state.settings.allowed_hosts.forEach(name => addHostRow(name));
     showState(state);
 }
 
@@ -37,9 +44,9 @@ function showState(state) {
     const notes = [];
     if (state.error) notes.push("config.toml has an error, so changes can't be saved until it's fixed:\n" + state.error);
     if (state.unknown && state.unknown.length) notes.push("config.toml has settings the app doesn't know (check their spelling): " + state.unknown.join(", "));
-    if (state.restart_needed) notes.push("Restart Now Playing from the tray menu to use the new port or network setting.");
     notice.textContent = notes.join("\n\n");
     notice.hidden = notes.length === 0;
+    showNetworkState(state);
 }
 
 // ==============================
@@ -130,17 +137,38 @@ document.getElementById("eq-reset").addEventListener("click", () => {
 const bars = document.getElementById("bars");
 for (let i = 0; i < 8; i++) bars.appendChild(el("span"));
 
-function connectBars() {
-    const socket = new WebSocket(`ws://${location.host}/ws?spectrum=1`);
-    socket.onmessage = event => {
-        const msg = JSON.parse(event.data);
-        if (msg.type !== "spectrum") return;
-        msg.levels.forEach((level, i) => {
-            if (bars.children[i]) bars.children[i].style.height = (level * 100) + "%";
-        });
-    };
-    socket.onclose = () => setTimeout(connectBars, 2000);
+function showLevels(levels) {
+    levels.forEach((level, i) => {
+        if (bars.children[i]) bars.children[i].style.height = (level * 100) + "%";
+    });
 }
+
+let barsSocket;
+let barsOpen = false;
+let restarting = false; // during a restart, don't retry (each failed try makes firefox wait longer)
+
+function connectBars() {
+    barsSocket = new WebSocket(`ws://${location.host}/ws?spectrum=1`);
+    barsSocket.onopen = () => { barsOpen = true; };
+    barsSocket.onmessage = event => {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "spectrum") showLevels(msg.levels);
+    };
+    barsSocket.onclose = () => { 
+        barsOpen = false;
+        if (!restarting) setTimeout(connectBars, 2000); 
+    };
+}
+
+// Until the WebSocket is open, ask for the levels directly. Firefox can hold a WebSocket back
+// for up to a minute after a restart; ordinary requests aren't held back
+setInterval(async () => {
+    if (barsOpen || restarting) return;
+    try {
+        const res = await fetch("/spectrum", { cache: "no-store" });
+        showLevels((await res.json()).levels);
+    } catch { /* not running right now */ }
+}, 150);
 
 // ==============================
 // Players: one row per player (media ID + process name)
@@ -255,6 +283,121 @@ function addDetected(id) {
         setStatus(playersStatus, "Now type its process name (Task Manager > Details).");
     }
 }
+
+// ==============================
+// Network: who can connect, port, other names, Restart
+// ==============================
+
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// The choice and the port box, from config.toml's values
+function setNetworkInputs(settings) {
+    const bind = settings.bind_address.trim();
+    const thisPC = ["127.0.0.1", "localhost", "::1"].includes(bind);
+    const everyone = ["0.0.0.0", "::"].includes(bind);
+    document.querySelector('input[name=bind][value="127.0.0.1"]').checked = thisPC;
+    document.querySelector('input[name=bind][value="0.0.0.0"]').checked = everyone;
+    // anything else (e.g. one specific address) was typed into config.toml: show it as it is
+    const custom = !thisPC && !everyone;
+    document.getElementById("bind-custom-row").hidden = !custom;
+    document.getElementById("bind-custom").checked = custom;
+    document.getElementById("bind-custom-value").textContent = bind;
+    portBox.value = settings.port;
+}
+
+// After every load or save: the Restart box, and the address other devices use
+function showNetworkState(state) {
+    restartBox.hidden = !state.restart_needed;
+    const url = document.getElementById("network-url");
+    url.hidden = !state.network_url;
+    url.textContent = state.network_url ? "Other devices open: " + state.network_url : "";
+}
+
+// Not saved: put the choice and port back to what's in config.toml (half-typed names stay)
+async function saveNetwork(changes) {
+    if (!(await save(changes, netStatus))) {
+        setNetworkInputs((await getState()).settings);
+    }
+}
+
+// The two choices (the "Set in config.toml" one has no value, so it's left out)
+document.querySelectorAll("input[name=bind][value]").forEach(radio => {
+    radio.addEventListener("change", () => saveNetwork({ bind_address: radio.value }));
+});
+
+// "change" fires on Enter, on leaving the box, or on the arrows; not on every key
+portBox.addEventListener("change", async () => {
+    const port = Number(portBox.value);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        setStatus(netStatus, "The port must be a whole number from 1 to 65535.", true);
+        setNetworkInputs((await getState()).settings);
+        return;
+    }
+    saveNetwork({ port });
+});
+
+// Other names for this PC: one row each, saved once typing pauses
+function addHostRow(name = "") {
+    const box = el("input", { value: name, placeholder: "e.g. desktop-abc.lan" });
+    const remove = el("button", { className: "close", title: "Remove this name" }, "×");
+    const row = el("div", { className: "host" }, box, remove);
+    box.addEventListener("input", queueHostsSave);
+    remove.addEventListener("click", () => { row.remove(); queueHostsSave(); });
+    hostsEl.appendChild(row);
+    return row;
+}
+
+document.getElementById("host-add").addEventListener("click", () => {
+    addHostRow().querySelector("input").focus();
+});
+
+let hostsTimer;
+function queueHostsSave() {
+    clearTimeout(hostsTimer);
+    hostsTimer = setTimeout(saveHosts, 600);
+}
+
+// Empty rows are skipped; an empty list is fine here
+function saveHosts() {
+    const names = [...hostsEl.querySelectorAll("input")].map(box => box.value.trim()).filter(Boolean);
+    save({ allowed_hosts: names }, netStatus);
+}
+
+// Restart, then reopen this page on the (maybe new) port once the new copy answers
+document.getElementById("restart").addEventListener("click", async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    restarting = true;
+    barsSocket.close();
+    setStatus(netStatus, "Restarting...");
+    try {
+        const port = (await getState()).settings.port;
+        const res = await fetch("/restart", { method: "POST" });
+        if (!res.ok) throw new Error(await res.text());
+
+        // This copy closes within ~2 seconds; wait until it stops answering...
+        for (let i = 0; i < 20; i++) {
+            await wait(250);
+            try { await fetch("/version", { cache: "no-store" }); } catch { break; }
+        }
+        // ...then for the new copy. ("no-cors": it may be on another port; we only need to know it answers)
+        const base = `${location.protocol}//${location.hostname}:${port}`;
+        for (let i = 0; i < 60; i++) {
+            await wait(500);
+            try {
+                await fetch(base + "/version", { mode: "no-cors", cache: "no-store" });
+                location.href = base + "/settings.html";
+                return;
+            } catch { /* not up yet */ }
+        }
+        setStatus(netStatus, "Now Playing didn't start again. Check for its tray icon, and nowplaying.log.", true);
+    } catch (err) {
+        setStatus(netStatus, err.message || "Couldn't reach Now Playing.", true);
+    }
+    restarting = false;
+    connectBars();
+    button.disabled = false;
+});
 
 // ==============================
 // Start

@@ -1,7 +1,7 @@
 use crate::{audio, config, favorites, log, media, themes};
 use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::extract::{Path, Query, State};
-use axum::http::{HeaderValue, header};
+use axum::http::{HeaderValue, StatusCode, header};
 use axum::response::IntoResponse;
 use axum::{Json, Router, routing::get};
 use serde::Deserialize;
@@ -246,6 +246,14 @@ fn start_broadcasters(state: AppState) {
     });
 }
 
+/// POST /restart: the settings page's Restart button, after a port or network change.
+/// Only from this PC (guard.rs refuses changes from other devices).
+async fn restart() -> StatusCode {
+    crate::log("restart requested from the settings page");
+    crate::tray::RESTART_REQUESTED.store(true, std::sync::atomic::Ordering::Relaxed);
+    StatusCode::NO_CONTENT
+}
+
 /// Starts the audio capture, then the HTTP server, and handles incoming requests
 pub async fn run() {
     let bands: audio::Bands = Arc::new(Mutex::new(vec![0.0; 8]));
@@ -277,6 +285,7 @@ pub async fn run() {
             get(crate::settings::get_settings).put(crate::settings::put_settings),
         )
         .route("/players/detected", get(detected_players))
+        .route("/restart", axum::routing::post(restart))
         .with_state(state)
         // Serve static files from the "static" directory.
         .fallback_service(ServeDir::new("static"))

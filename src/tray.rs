@@ -1,5 +1,6 @@
 use crate::{audio, config, favorites, media, themes};
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tray_icon::{
@@ -56,7 +57,7 @@ fn display_name(name: &str) -> String {
 }
 
 /// Builds the overlay address for a theme, using the port from config.toml
-fn overlay_url(host: &str, theme: &str) -> String {
+pub(crate) fn overlay_url(host: &str, theme: &str) -> String {
     let port = config::get().port;
     if theme == "default" {
         format!("http://{host}:{port}/overlay.html")
@@ -75,12 +76,25 @@ fn local_ip() -> Option<std::net::IpAddr> {
 }
 
 /// The address other devices use to reach the overlay, or None if only this PC can connect
-fn network_host() -> Option<String> {
+pub(crate) fn network_host() -> Option<String> {
     match config::get().bind_address.trim() {
         "127.0.0.1" | "localhost" | "::1" => None, // This PC only
         "0.0.0.0" => local_ip().map(|ip| ip.to_string()), // Every network: use this PC's address
         other => Some(other.to_string()),          // A specific address was set: use it
     }
+}
+
+/// Set by the settings page's Restart button (POST /restart). The message loop checks it every 2 seconds.
+pub static RESTART_REQUESTED: AtomicBool = AtomicBool::new(false);
+
+/// Starts a new copy (same folder, so static/ and config.toml are found), then closes this one.
+/// Must run on the tray's thread: PostQuitMessage ends the message loop of the thread that calls it.
+fn restart_app() {
+    if let Ok(exe) = std::env::current_exe() {
+        let _ = std::process::Command::new(exe).arg("--restarted").spawn();
+    }
+    // End the message loop instead of exiting on the spot, so the tray icon is properly removed
+    unsafe { PostQuitMessage(0) };
 }
 
 // Adds one item per theme to a submenu
@@ -334,14 +348,7 @@ pub fn run(shared: Status) {
                     }
                 }
             }
-            Some(Action::Restart) => {
-                // Start a new copy (same folder, so static/ and config.toml are found), then closes this one
-                if let Ok(exe) = std::env::current_exe() {
-                    let _ = std::process::Command::new(exe).arg("--restarted").spawn();
-                }
-                // End the message loop instead of exiting on the spot, so the tray icon is removed properly
-                unsafe { PostQuitMessage(0) };
-            }
+            Some(Action::Restart) => restart_app(),
             Some(Action::Quit) => unsafe { PostQuitMessage(0) },
             None => {}
         }
@@ -382,6 +389,11 @@ pub fn run(shared: Status) {
         let mut msg = MSG::default();
         while GetMessageW(&mut msg, None, 0, 0).as_bool() {
             if msg.message == WM_TIMER {
+                // The settings page asked for a Restart
+                if RESTART_REQUESTED.swap(false, Ordering::Relaxed) {
+                    restart_app();
+                }
+
                 // the favorites changed in the gallery: refill the two submenus
                 let version = favorites::version();
                 if version != seen_version {

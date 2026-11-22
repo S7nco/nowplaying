@@ -38,7 +38,7 @@
                 <span id="eq-status" class="status"></span>
             </div>
         </section>
-        
+
         <section class="panel">
             <h2>Players</h2>
             <p class="hint">Now Playing shows whichever of these is playing. Each needs part of its media ID (to find its song) and its process name (for the equalizer; see Task Manager &gt; Details).</p>
@@ -52,6 +52,42 @@
             <h3>Detected Right Now</h3>
             <p class="hint">Media apps Windows can see at the moment. Start playing something in a player to make it show up here.</p>
             <ul id="detected" class="detected"></ul>
+        </section>
+
+        <section class="panel">
+            <h2>Network</h2>
+            <p class="hint">Who can open the overlay. If OBS runs on this PC, "This PC only" is all you need.</p>
+            <label class="choice">
+                <input type="radio" name="bind" value="127.0.0.1">
+                <span>This PC only <small>Safest. OBS and browsers on this PC.</small></span>
+            </label>
+            <label class="choice">
+                <input type="radio" name="bind" value="0.0.0.0">
+                <span>Other devices on my network too <small>OBS on a second PC, a phone or a tablet. Settings can still only be changed on this PC.</small></span>
+            </label>
+            <label class="choice" id="bind-custom-row" hidden>
+                <input type="radio" name="bind" id="bind-custom">
+                <span>Set in config.toml: <code id="bind-custom-value"></code></span>
+            </label>
+            <p id="network-url" class="hint" hidden></p>
+
+            <label class="field">
+                <span>Port <small>Change it if another app already uses this one. OBS sources need the new address afterwards.</small></span>
+                <input type="number" id="port" min="1" max="65535">
+            </label>
+
+            <h3>Other names for this PC</h3>
+            <p class="hint">Only needed if other devices reach this PC by another name, like desktop-abc.lan from your router. This PC's own name and addresses always work.</p>
+            <div id="hosts"></div>
+            <div class="row-end">
+                <button id="host-add" class="chip">+ Add Name</button>
+                <span id="network-status" class="status"></span>
+            </div>
+
+            <div id="restart-box" class="restart" hidden>
+                <span>Restart Now Playing to use the new port or network setting.</span>
+                <button id="restart" class="chip">Restart Now</button>
+            </div>
         </section>
 
     <script src="settings.js"></script> 
