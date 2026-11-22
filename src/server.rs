@@ -314,6 +314,30 @@ pub async fn run() {
     log(&format!(
         "Server running on http://localhost:{port} (listening on {addr})"
     ));
+    // "localhost" means both 127.0.0.1 and ::1 on Windows, and browsers try ::1 first.
+    // Listening only on 127.0.0.1 made every new connection wait ~2s for ::1 to fail. ::1 is this PC only.
+    if config::get()
+        .bind_address
+        .trim()
+        .parse::<std::net::Ipv4Addr>()
+        .is_ok()
+    {
+        match tokio::net::TcpListener::bind(format!("[::1]:{port}")).await {
+            Ok(listener6) => {
+                let app6 = app
+                    .clone()
+                    .into_make_service_with_connect_info::<std::net::SocketAddr>();
+                tokio::spawn(async move {
+                    if let Err(e) = axum::serve(listener6, app6).await {
+                        log(&format!("Server on [::1] stopped: {e}"));
+                    }
+                });
+                log(&format!("Also listening on [::1]:{port}"));
+            }
+            // e.g. IPv6 turned off on this PC: everything still works through 127.0.0.1, just slower to connect
+            Err(e) => log(&format!("Couldn't also listen on [::1]:{port}: {e}")),
+        }
+    }
     if let Err(e) = axum::serve(
         listener,
         app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
