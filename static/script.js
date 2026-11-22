@@ -161,6 +161,12 @@ function cssSetting(name) {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+// A number from the theme, or the fallback if it's missing or outside a sensible range (like 1e999)
+function cssNumber(name, fallback, min, max) {
+    const value = parseFloat(cssSetting(name));
+    return Number.isFinite(value) && value >= min && value <= max ? value : fallback;
+}
+
 // Sets a CSS variable / text only when it changed, so the browser skips needless work
 function setVar(el, name, value) {
     if (el.style.getPropertyValue(name) !== String(value)) el.style.setProperty(name, value);
@@ -301,10 +307,8 @@ function setMarquee(id, text) {
         span.textContent = text + MARQUEE_GAP + text + MARQUEE_GAP;
 
         //Theme settings: use them only if they're sensible numbers, otherwise the defaults
-        const speedSetting = parseFloat(cssSetting("--marquee-speed"));
-        const speed = speedSetting > 0 ? speedSetting : MARQUEE_SPEED;
-        const pauseSetting = parseFloat(cssSetting("--marquee-pause"));
-        const pause = pauseSetting >= 0 ? pauseSetting : MARQUEE_PAUSE;
+        const speed = cssNumber("--marquee-speed", MARQUEE_SPEED, 0.1, 10000);
+        const pause = cssNumber("--marquee-pause", MARQUEE_PAUSE, 0, 600);
         const scroll = (span.offsetWidth / 2) / speed;
         const total = scroll + pause; 
         span.animate([
@@ -430,8 +434,8 @@ function popupConfig() {
     return {
         enabled: cssSetting("--popup") === "1",
         card: cssSetting("--popup-card") || "album",
-        cardMs: (parseFloat(cssSetting("--popup-card-time")) || 2.5) * 1000,
-        showMs: (parseFloat(cssSetting("--popup-show-time")) || 7) * 1000
+        cardMs: cssNumber("--popup-card-time", 2.5, 0.1, 600) * 1000,
+        showMs: cssNumber("--popup-show-time", 7, 0.1, 600) * 1000
     }
 }
 
