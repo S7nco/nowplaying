@@ -41,15 +41,29 @@ pub fn find_pid(name: &str) -> Option<u32> {
 // and if that fails waits 2 seconds and tries agains
 pub fn start(bands: Bands) {
     thread::spawn(move || {
+        // what was last logged, so a capture that keeps failing doesn't fill the log
+        let mut last_pid = None;
+        let mut last_error = None;
         loop {
             let names = crate::media::split_list(&crate::config::get().process_name);
             let index = crate::media::ACTIVE_APP
                 .load(Ordering::Relaxed)
                 .min(names.len().saturating_sub(1));
             if let Some(pid) = names.get(index).and_then(|n| find_pid(n)) {
-                crate::log(&format!("Capturing audio from process {pid}"));
-                if let Err(e) = capture_loop(pid, index, &bands) {
-                    crate::log(&format!("Capture stopped: {e}"));
+                if last_pid != Some(pid) {
+                    crate::log(&format!("Capturing audio from process {pid}"));
+                    last_pid = Some(pid);
+                    last_error = None;
+                }
+                match capture_loop(pid, index, &bands) {
+                    Ok(()) => last_error = None,
+                    Err(e) => {
+                        let text = e.to_string();
+                        if last_error.as_ref() != Some(&text) {
+                            crate::log(&format!("Capture stopped: {text}"));
+                            last_error = Some(text);
+                        }
+                    }
                 }
             }
             *bands.lock().unwrap() = vec![0.0; BANDS];
