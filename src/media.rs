@@ -159,10 +159,21 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
     };
     let playing = session.GetPlaybackInfo()?.PlaybackStatus()? == PlaybackStatus::Playing;
 
-    // "Aritst - Album" -> artist and album
-    let mut parts = artist_raw.split(" \u{2014} "); // em dash
-    let artist = parts.next().unwrap_or("").to_string();
-    let album = parts.next().map(|s| s.to_string()).or_else(|| {
+    // "Artist - Album" -> artist and album
+    // Only Apple Music combines them; in other players a dash is part of the artist's name
+    let is_apple_music = session
+        .SourceAppUserModelId()
+        .is_ok_and(|id| id.to_string().to_lowercase().contains("applemusic"));
+    let (artist, album_in_artist) = if is_apple_music {
+        let mut parts = artist_raw.split(" \u{2014} "); // em dash
+        (
+            parts.next().unwrap_or("").to_string(),
+            parts.next().map(|s| s.to_string()),
+        )
+    } else {
+        (artist_raw.clone(), None)
+    };
+    let album = album_in_artist.or_else(|| {
         props
             .AlbumTitle()
             .ok()
