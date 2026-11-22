@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use std::sync::{Arc, OnceLock, RwLock};
 use std::time::Duration;
 
-#[derive(Deserialize, Serialize, PartialEq)]
+#[derive(Deserialize, Serialize, PartialEq, Clone)]
 #[serde(default)]
 pub struct Config {
     pub port: u16,
@@ -22,14 +22,20 @@ static RESTART_NOTED: Mutex<Option<(u16, String)>> = Mutex::new(None);
 
 // The current settings. A reload swaps in a new copy; code still using the old one finishes safely
 static CONFIG: OnceLock<RwLock<Arc<Config>>> = OnceLock::new();
-const FILE: &str = "config.toml";
+pub const FILE: &str = "config.toml";
 
 fn slot() -> &'static RwLock<Arc<Config>> {
     CONFIG.get_or_init(|| {
-        let cfg = read_file().unwrap_or_else(|e| {
-            crate::log(&format!("config.toml error, using defaults: {e}"));
-            Config::default()
-        });
+        let cfg = match read_file() {
+            Ok((cfg, unknown)) => {
+                warn_unknown(&unknown);
+                cfg
+            }
+            Err(e) => {
+                crate::log(&format!("config.toml error, using defaults: {e}"));
+                Config::default()
+            }
+        };
         RwLock::new(Arc::new(cfg))
     })
 }
@@ -56,27 +62,34 @@ pub fn get() -> Arc<Config> {
 }
 
 // Reads config.toml. No file means all defaults; a broken file will result in an error
-fn read_file() -> Result<Config, String> {
+pub fn read_file() -> Result<(Config, Vec<String>), String> {
     match std::fs::read_to_string(FILE) {
         Ok(text) => {
             let cfg: Config = toml::from_str(&text).map_err(|e| e.to_string())?;
-            warn_unknown_settings(&text);
-            Ok(cfg)
+            Ok((cfg, unknown_settings(&text)))
         }
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Config::default()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok((Config::default(), Vec::new())),
         Err(e) => Err(format!("Couldn't read config.toml: {e}")),
     }
 }
 
 // Logs settings in config.toml the app doesn't know (usually a typo, like "eq_floor_dgb").
-fn warn_unknown_settings(text: &str) {
-    let Ok(file) = text.parse::<toml::Table>() else {
-        return;
+fn unknown_settings(text: &str) -> Vec<String> {
+    let (Ok(file), Ok(known)) = (
+        text.parse::<toml::Table>(),
+        toml::Table::try_from(Config::default()),
+    ) else {
+        return Vec::new();
     };
-    let Ok(known) = toml::Table::try_from(Config::default()) else {
-        return;
-    };
-    for name in file.keys().filter(|name| !known.contains_key(*name)) {
+    file.keys()
+        .filter(|name| !known.contains_key(*name))
+        .cloned()
+        .collect()
+}
+
+// They'd otherwise be ignored silently, and the real setting would quietly use its default
+fn warn_unknown(names: &[String]) {
+    for name in names {
         crate::log(&format!(
             "config.toml: unknown setting \"{name}\" is ignored. Check its spelling against config.example.toml"
         ));
@@ -85,7 +98,8 @@ fn warn_unknown_settings(text: &str) {
 
 // Reads config.toml again and uses it from now. If it has an error, current settings stay
 pub fn reload() -> Result<(), String> {
-    let mut new = read_file()?;
+    let (mut new, unknown) = read_file()?;
+    warn_unknown(&unknown);
     let old = get();
     let wanted = (new.port, new.bind_address.clone());
     let mut noted = RESTART_NOTED.lock().unwrap();

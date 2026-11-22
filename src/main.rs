@@ -26,6 +26,8 @@ mod tray;
 mod guard;
 // writing files safely (cover.jpg, favorites.json)
 mod files;
+// the settings API: read and change config.toml from the settings page
+mod settings;
 
 // Lets the other files keep calling crate::log(...)
 pub use logging::log;
