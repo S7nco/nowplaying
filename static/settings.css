@@ -1,0 +1,40 @@
+/* Settings page (settings.html). Colors, fonts, and buttons come from gallery.css */
+
+body { max-width: 760px; margin: 0 auto; }
+a { color: var(--accent); }
+
+.panel { margin-top: 16px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.panel h2 { margin-top: 0; }
+.hint { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+
+/* Messages about config.toml (errors, unknown settings, Restart needed) */
+.notice {
+    white-space: pre-line;
+    margin-top: 12px;
+    padding: 10px 14px;
+    border: 1px solid #8a6d1f;
+    border-radius: 8px;
+    background: #2a2414;
+    color: #f0d68a;
+    font-size: 13px;
+}
+
+/* Live equalizer bars */
+.bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin-bottom: 16px; padding: 10px; border-radius: 8px; background: #0c0e13; }
+.bars span { flex: 1; height: 0; border-radius: 3px 3px 0 0; background: var(--accent); transition: height 0.08s linear; }
+
+/* A slider row: label, slider, value */
+.slider { display: grid; grid-template-columns: 1fr 2fr 70px; align-items: center; gap: 12px; margin: 10px 0; }
+.slider small { display: block; color: var(--muted); font-size: 12px; }
+.slider input { width: 100%; accent-color: var(--accent-line); }
+.slider output { text-align: right; font-variant-numeric: tabular-nums; }
+
+.row-end { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+.status { color: var(--muted); font-size: 13px; }
+.status.bad { color: #f08a8a; }
+
+/* Narrow windows: the slider gets its own line */
+@media (max-width: 560px) {
+    .slider { grid-template-columns: 1fr 70px; }
+    .slider input { grid-column: 1 / -1; }
+}

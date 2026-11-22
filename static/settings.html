@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Now Playing: Settings</title>
+        <link rel="stylesheet" href="gallery.css">
+        <link rel="stylesheet" href="settings.css">
+    </head>
+    <body>
+        <h1>Settings</h1>
+        <p class="sub">Changes are saved to config.toml as you make them. <a href="gallery.html">Theme Gallery</a></p>
+        <div id="notice" class="notice" hidden></div>
+
+        <section class="panel">
+            <h2>Equalizer</h2>
+            <p class="hint">Play some music and adjust until the bars look right: near the top on loud parts, low on quiet parts.</p>
+            <div id="bars" class="bars"></div>
+
+            <label class="slider">
+                <span>Ceiling <small>A bar is full at this level</small></span>
+                <input type="range" id="eq_ceil_db" min="-60" max="0" step="1">
+                <output></output>
+            </label>
+            <label class="slider">
+                <span>Floor <small>A bar is empty at this level</small></span>
+                <input type="range" id="eq_floor_db" min="-120" max="-30" step="1">
+                <output></output>
+            </label>
+            <label class="slider">
+                <span>Tilt <small>Boost for the higher bars (right side)</small></span>
+                <input type="range" id="eq_tilt_db" min="0" max="8" step="0.5">
+                <output></output>
+            </label>
+
+            <div class="row-end">
+                <button id="eq-reset" class="chip">Reset to defaults</button>
+                <span id="eq-status" class="status"></span>
+            </div>
+        </section>
+
+    <script src="settings.js"></script> 
+    </body>
+</html>

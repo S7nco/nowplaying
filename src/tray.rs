@@ -260,6 +260,16 @@ pub fn run(shared: Status) {
         .unwrap()
         .insert(gallery.id().clone(), Action::Open(gallery_url.clone()));
 
+    // Opens the settings page in the browser
+    let settings = MenuItem::new("Settings", true, None);
+    actions.lock().unwrap().insert(
+        settings.id().clone(),
+        Action::Open(format!(
+            "http://localhost:{}/settings.html",
+            config::get().port
+        )),
+    );
+
     let restart = MenuItem::new("Restart", true, None);
     actions
         .lock()
@@ -292,6 +302,7 @@ pub fn run(shared: Status) {
     menu.append(&status_item).unwrap();
     menu.append(&PredefinedMenuItem::separator()).unwrap();
     menu.append(&gallery).unwrap();
+    menu.append(&settings).unwrap();
     menu.append(&open_menu).unwrap();
     menu.append(&copy_menu).unwrap();
     if let Some(net) = &net_menu {

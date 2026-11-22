@@ -30,8 +30,15 @@ fn state() -> Value {
         Ok((cfg, unknown)) => (cfg, unknown, None),
         Err(e) => ((*running).clone(), Vec::new(), Some(e)),
     };
-    let restart_needed = settings.port != running.port || settings.bind_address != running.bind_address;
-    json!({ "settings": settings, "restart_needed": restart_needed, "unknown": unknown, "error": error })
+    let restart_needed =
+        settings.port != running.port || settings.bind_address != running.bind_address;
+    json!({
+        "settings": settings,
+        "defaults": Config::default(),
+        "restart_needed": restart_needed,
+        "unknown": unknown,
+        "error": error
+    })
 }
 
 fn one_error(name: &str, message: impl Into<String>) -> Errors {
@@ -43,8 +50,12 @@ fn one_error(name: &str, message: impl Into<String>) -> Errors {
 /// Checks the changes, writes them into config.toml, and uses them. Nothing is saved if anything is wrong.
 fn apply(changes: &Map<String, Value>) -> Result<(), Errors> {
     // Start from what config.toml says now, with the changes on top
-    let (current, _) = config::read_file()
-        .map_err(|e| one_error("config.toml", format!("config.toml has an error; fix it first: {e}")))?;
+    let (current, _) = config::read_file().map_err(|e| {
+        one_error(
+            "config.toml",
+            format!("config.toml has an error; fix it first: {e}"),
+        )
+    })?;
     let mut merged = serde_json::to_value(&current).unwrap_or_default();
     let mut errors = Errors::new();
     for (name, value) in changes {
@@ -60,13 +71,15 @@ fn apply(changes: &Map<String, Value>) -> Result<(), Errors> {
     }
 
     // The right kind of value (a number, text, a list), then sensible values
-    let candidate: Config = serde_json::from_value(merged).map_err(|e| one_error("settings", e.to_string()))?;
+    let candidate: Config =
+        serde_json::from_value(merged).map_err(|e| one_error("settings", e.to_string()))?;
     check(&candidate, &mut errors);
-    if !errors.is_empty(){
+    if !errors.is_empty() {
         return Err(errors);
     }
 
-    write(changes).map_err(|e| one_error("config.toml", format!("couldn't save config.toml: {e}")))?;
+    write(changes)
+        .map_err(|e| one_error("config.toml", format!("couldn't save config.toml: {e}")))?;
     // Use them now. (The file watcher also notices, a moment later, but finds nothing new)
     config::reload().map_err(|e| one_error("config.toml", e))
 }
@@ -81,26 +94,40 @@ fn check(c: &Config, errors: &mut Errors) {
     }
     let bind = c.bind_address.trim();
     if bind != "localhost" && bind.parse::<std::net::IpAddr>().is_err() {
-        bad("bind_address", "Must be an IP address, like 127.0.0.1 (this PC only) or 0.0.0.0 (other devices too)");
+        bad(
+            "bind_address",
+            "Must be an IP address, like 127.0.0.1 (this PC only) or 0.0.0.0 (other devices too)",
+        );
     }
     if !(-150.0..=0.0).contains(&c.eq_floor_db) {
         bad("eq_floor_db", "Must be between -150 and 0");
     }
     if !(-150.0..=0.0).contains(&c.eq_ceil_db) {
         bad("eq_ceil_db", "Must be between -150 and 0");
+    } else if c.eq_ceil_db <= c.eq_floor_db {
+        bad("eq_ceil_db", "Must be higher than eq_floor_db");
     }
     if !(-10.0..=10.0).contains(&c.eq_tilt_db) {
         bad("eq_tilt_db", "Must be between -10 and 10");
     }
     let players = crate::media::split_list(&c.process_name).len();
     if crate::media::split_list(&c.app_id_match).len() != players {
-        bad("app_id_match", "Needs one entry for each process_name entry, in the same order");
+        bad(
+            "app_id_match",
+            "Needs one entry for each process_name entry, in the same order",
+        );
     }
     if c.tray_themes.iter().any(|t| !crate::themes::valid_name(t)) {
-        bad("tray_themes", "Theme names use only letters, numbers, - and _");
+        bad(
+            "tray_themes",
+            "Theme names use only letters, numbers, - and _",
+        );
     }
     if c.allowed_hosts.iter().any(|h| h.contains('*')) {
-        bad("allowed_hosts", "Wildcards aren't supported; list each name");
+        bad(
+            "allowed_hosts",
+            "Wildcards aren't supported; list each name",
+        );
     }
 }
 
@@ -112,7 +139,9 @@ fn write(changes: &Map<String, Value>) -> std::io::Result<()> {
     for (name, value) in changes {
         // numbers with decimals stay that way in the file ("-30.0", not "-30")
         let decimal = matches!(defaults.get(name), Some(toml::Value::Float(_)));
-        let Some(new) = to_toml(value, decimal) else { continue };
+        let Some(new) = to_toml(value, decimal) else {
+            continue;
+        };
         match doc.get_mut(name).and_then(|item| item.as_value_mut()) {
             // keep the spacing and any comment after the value on that line
             Some(old) => {
@@ -135,7 +164,11 @@ fn to_toml(value: &Value, decimal: bool) -> Option<toml_edit::Value> {
         Value::Number(n) if decimal => n.as_f64()?.into(),
         Value::Number(n) => n.as_i64()?.into(),
         Value::String(s) => s.as_str().into(),
-        Value::Array(items) => items.iter().filter_map(Value::as_str).collect::<toml_edit::Array>().into(),
+        Value::Array(items) => items
+            .iter()
+            .filter_map(Value::as_str)
+            .collect::<toml_edit::Array>()
+            .into(),
         _ => return None,
     })
 }
