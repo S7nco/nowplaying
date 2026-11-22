@@ -67,6 +67,38 @@ pub fn read_track() -> TrackInfo {
     }
 }
 
+/// A media app Windows can see right now, for the settings page's "Detected right now" list.
+/// No song title: with bind_address = "0.0.0.0" other devices can read this list
+#[derive(Serialize)]
+pub struct DetectedSession {
+    pub id: String,
+    pub playing: bool,
+    pub known: bool, // one of the players in config.toml already matches it
+}
+
+pub fn detected_sessions() -> Vec<DetectedSession> {
+    let Ok(manager) = manager() else {
+        return Vec::new();
+    };
+    let Ok(sessions) = manager.GetSessions() else {
+        return Vec::new();
+    };
+    let wanted = split_list(&crate::config::get().app_id_match);
+    sessions
+        .into_iter()
+        .filter_map(|s| {
+            let id = s.SourceAppUserModelId().ok()?.to_string();
+            let lower = id.to_lowercase();
+            let playing = s
+                .GetPlaybackInfo()
+                .and_then(|info| info.PlaybackStatus())
+                .is_ok_and(|status| status == PlaybackStatus::Playing);
+            let known = wanted.iter().any(|w| lower.contains(w.as_str()));
+            Some(DetectedSession { id, playing, known })
+        })
+        .collect()
+}
+
 // The track we last logged an artwork problem for, so each track logs it only once
 static LAST_ART_LOG: Mutex<Option<(String, String)>> = Mutex::new(None);
 

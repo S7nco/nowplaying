@@ -42,7 +42,17 @@ async fn current_track() -> media::TrackInfo {
     info
 }
 
-// GET /nowplaying: the current song as JSON (overlays use /ws, this is the fallback)
+/// GET /players/detected: the media apps Windows can see right now (for the settings page)
+async fn detected_players() -> Json<Vec<media::DetectedSession>> {
+    // Windows' media calls wait for an answer, so run them off the async threads
+    Json(
+        tokio::task::spawn_blocking(media::detected_sessions)
+            .await
+            .unwrap_or_default(),
+    )
+}
+
+/// GET /nowplaying: the current song as JSON (overlays use /ws, this is the fallback)
 async fn nowplaying() -> Json<media::TrackInfo> {
     Json(current_track().await)
 }
@@ -266,6 +276,7 @@ pub async fn run() {
             "/settings",
             get(crate::settings::get_settings).put(crate::settings::put_settings),
         )
+        .route("/players/detected", get(detected_players))
         .with_state(state)
         // Serve static files from the "static" directory.
         .fallback_service(ServeDir::new("static"))

@@ -38,6 +38,21 @@
                 <span id="eq-status" class="status"></span>
             </div>
         </section>
+        
+        <section class="panel">
+            <h2>Players</h2>
+            <p class="hint">Now Playing shows whichever of these is playing. Each needs part of its media ID (to find its song) and its process name (for the equalizer; see Task Manager &gt; Details).</p>
+            <div class="player-head"><span>Media ID contains</span><span>Process Name</span><span></span></div>
+            <div id="players"></div>
+            <div class="row-end">
+                <button id="player-add" class="chip">+ Add Player</button>
+                <span id="players-status" class="status"></span>
+            </div>
+
+            <h3>Detected Right Now</h3>
+            <p class="hint">Media apps Windows can see at the moment. Start playing something in a player to make it show up here.</p>
+            <ul id="detected" class="detected"></ul>
+        </section>
 
     <script src="settings.js"></script> 
     </body>

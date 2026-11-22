@@ -38,3 +38,20 @@ a { color: var(--accent); }
     .slider { grid-template-columns: 1fr 70px; }
     .slider input { grid-column: 1 / -1; }
 }
+
+/* Players: one row per player */
+.player-head, .player { display: grid; grid-template-columns: 1fr 1fr 32px; gap: 8px; align-items: center; }
+.player-head { margin-bottom: 4px; color: var(--muted); font-size: 12px; }
+.player { margin-bottom: 6px; }
+.player input { width: 100%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: inherit; font: inherit; font-size: 13px; }
+.player input.missing { border-color: #a05050; }
+
+h3 { margin: 18px 0 6px; color: var(--muted); font-size: 13px; font-weight: 600; }
+
+/* Detected right now */
+.detected { margin: 0; padding: 0; list-style: none; }
+.detected li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.detected li.empty { color: var(--muted); }
+.detected code { flex: 1; overflow-wrap: anywhere; }
+.badge { padding: 2px 8px; border-radius: 10px; background: var(--hover); color: var(--subtle); font-size: 11px; }
+.badge.on { color: #8fdcaa; }
