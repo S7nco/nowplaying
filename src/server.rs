@@ -286,6 +286,10 @@ pub async fn run() {
         )
         .route("/players/detected", get(detected_players))
         .route("/restart", axum::routing::post(restart))
+        .route(
+            "/startup",
+            get(crate::startup::get_startup).put(crate::startup::put_startup),
+        )
         .with_state(state)
         // Serve static files from the "static" directory.
         .fallback_service(ServeDir::new("static"))

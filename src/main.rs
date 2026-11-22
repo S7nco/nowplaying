@@ -28,6 +28,8 @@ mod guard;
 mod files;
 // the settings API: read and change config.toml from the settings page
 mod settings;
+// Start with Windows: the registry entry, for the settings page and the tray
+mod startup;
 
 // Lets the other files keep calling crate::log(...)
 pub use logging::log;

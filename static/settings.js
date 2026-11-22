@@ -400,6 +400,52 @@ document.getElementById("restart").addEventListener("click", async event => {
 });
 
 // ==============================
+// Startup: Start with Windows
+// ==============================
+
+const startupBox = document.getElementById("startup");
+const startupNote = document.getElementById("startup-note");
+const startupStatus = document.getElementById("startup-status");
+
+function showStartup(startup) {
+    startupBox.checked = startup.enabled;
+    startupBox.disabled = !startup.can_enable && !startup.enabled;
+    let note = "";
+    if (!startup.can_enable) note = "Not available in a development build. It works from the packaged app.";
+    else if (startup.blocked) note = "Windows has this turned off. Turn it back on in Settings > Apps > Startup.";
+    else if (startup.other_copy) note = "Another copy of Now Playing is set to start with Windows. Turning this on switches it to this copy.";
+    startupNote.textContent = note;
+    startupNote.hidden = !note;
+}
+
+async function loadStartup() {
+    showStartup(await (await fetch("/startup", { cache: "no-store" })).json());
+}
+
+startupBox.addEventListener("change", async () => {
+    setStatus(startupStatus, "Saving...");
+    try {
+        const res = await fetch("/startup", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ enabled: startupBox.checked }),
+        });
+        const text = await res.text();
+        if (!res.ok) {
+            let message = text;     // a refusal from the guard is plain text
+            try { message = JSON.parse(text).error; } catch { /* keep the text */ }
+            setStatus(startupStatus, message, true);
+            await loadStartup();
+            return;
+        }
+        showStartup(JSON.parse(text));
+        setStatus(startupStatus, "Saved");
+    } catch {
+        setStatus(startupStatus, "Couldn't reach Now Playing. Is it running?", true);
+    }
+});
+
+// ==============================
 // Start
 // ==============================
 
@@ -409,4 +455,5 @@ load().catch(() => {
 });
 connectBars();
 loadDetected();
+loadStartup().catch(() => {});
 setInterval(loadDetected, 5000);

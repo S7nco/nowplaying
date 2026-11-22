@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tray_icon::{
     Icon, MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent,
-    menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem, Submenu},
+    menu::{CheckMenuItem, Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem, Submenu},
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     DispatchMessageW, GetMessageW, MSG, PostQuitMessage, SetTimer, TranslateMessage, WM_TIMER,
@@ -21,6 +21,7 @@ enum Action {
     Open(String),
     Copy(String),
     CopyNetwork(String), // a theme name: the URL is built with the current network address when clicked
+    ToggleStartup,
     Restart,
     Quit,
 }
@@ -284,6 +285,18 @@ pub fn run(shared: Status) {
         )),
     );
 
+    // Start with Windows: a checkmark that follows the registry
+    let startup_item = CheckMenuItem::new(
+        "Start with Windows",
+        true,
+        crate::startup::status().enabled,
+        None,
+    );
+    actions
+        .lock()
+        .unwrap()
+        .insert(startup_item.id().clone(), Action::ToggleStartup);
+
     let restart = MenuItem::new("Restart", true, None);
     actions
         .lock()
@@ -323,6 +336,7 @@ pub fn run(shared: Status) {
         menu.append(net).unwrap();
     }
     menu.append(&PredefinedMenuItem::separator()).unwrap();
+    menu.append(&startup_item).unwrap();
     menu.append(&open_log).unwrap();
     menu.append(&version).unwrap();
     menu.append(&restart).unwrap();
@@ -346,6 +360,12 @@ pub fn run(shared: Status) {
                     if let Ok(mut clipboard) = arboard::Clipboard::new() {
                         let _ = clipboard.set_text(overlay_url(&host, &theme));
                     }
+                }
+            }
+            Some(Action::ToggleStartup) => {
+                let on = !crate::startup::status().enabled;
+                if let Err(e) = crate::startup::set(on) {
+                    crate::show_message(&e, true);
                 }
             }
             Some(Action::Restart) => restart_app(),
@@ -393,6 +413,9 @@ pub fn run(shared: Status) {
                 if RESTART_REQUESTED.swap(false, Ordering::Relaxed) {
                     restart_app();
                 }
+
+                // Keep the checkmark right, including after a change on the settings page
+                startup_item.set_checked(crate::startup::status().enabled);
 
                 // the favorites changed in the gallery: refill the two submenus
                 let version = favorites::version();
