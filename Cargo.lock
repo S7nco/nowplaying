@@ -1045,6 +1045,7 @@ dependencies = [
  "tray-icon",
  "wasapi",
  "windows",
+ "windows-future",
  "winresource",
 ]
 

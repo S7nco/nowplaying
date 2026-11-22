@@ -1,7 +1,7 @@
 use serde::Serialize;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Mutex, OnceLock};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use windows::Media::Control::{
     GlobalSystemMediaTransportControlsSessionManager as Manager,
     GlobalSystemMediaTransportControlsSessionPlaybackStatus as PlaybackStatus,
@@ -9,6 +9,27 @@ use windows::Media::Control::{
 use windows::Storage::Streams::{
     Buffer, DataReader, IRandomAccessStreamReference, InputStreamOptions,
 };
+use windows::core::{HRESULT, Interface};
+use windows_future::{AsyncStatus, IAsyncInfo};
+
+// How long to wait for Windows to answer about a media app
+const WINDOWS_TIMEOUT: Duration = Duration::from_secs(2);
+const TIMED_OUT: HRESULT = HRESULT(0x800705B4u32 as i32); // Windows' "operation timed out" code
+
+/// Waits for a Windows operation to finish, but not forever: a frozen player can't hang the app.
+/// Use it before .join(), which then returns right away.
+fn within_time<O: Interface>(operation: O) -> windows::core::Result<O> {
+    let info: IAsyncInfo = operation.cast()?;
+    let started = Instant::now();
+    while info.Status()? == AsyncStatus::Started {
+        if started.elapsed() >= WINDOWS_TIMEOUT {
+            let _ = info.Cancel();
+            return Err(TIMED_OUT.into());
+        }
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    Ok(operation)
+}
 
 // Created once, then reused. Making a new one on every request leaks memory.
 static MANAGER: OnceLock<Manager> = OnceLock::new();
@@ -17,7 +38,7 @@ fn manager() -> windows::core::Result<&'static Manager> {
     if let Some(m) = MANAGER.get() {
         return Ok(m);
     }
-    let m = Manager::RequestAsync()?.join()?;
+    let m = within_time(Manager::RequestAsync()?)?.join()?;
     Ok(MANAGER.get_or_init(|| m))
 }
 
@@ -52,9 +73,22 @@ pub fn split_list(s: &str) -> Vec<String> {
 /// Always returns something. If anything fails, you get a TrackInfo full of nulls
 static LAST_ERROR: Mutex<String> = Mutex::new(String::new());
 
+// Held while reading from Windows, so a slow player can't pile up waiting threads
+static READING: Mutex<()> = Mutex::new(());
+// The last good answer: used during another read, or if Windows stops answering
+static LAST_RESULT: Mutex<Option<TrackInfo>> = Mutex::new(None);
+
 pub fn read_track() -> TrackInfo {
+    let Ok(_reading) = READING.try_lock() else {
+        return LAST_RESULT.lock().unwrap().clone().unwrap_or_default();
+    };
     match read_track_inner() {
-        Ok(track) => track.unwrap_or_default(),
+        Ok(track) => {
+            let track = track.unwrap_or_default();
+            LAST_ERROR.lock().unwrap().clear(); // working again: a new failure gets logged
+            *LAST_RESULT.lock().unwrap() = Some(track.clone());
+            track
+        }
         Err(e) => {
             let text = format!("Reading media sessions failed: {e}");
             let mut last = LAST_ERROR.lock().unwrap();
@@ -62,7 +96,12 @@ pub fn read_track() -> TrackInfo {
                 crate::log(&text);
                 *last = text;
             }
-            TrackInfo::default()
+            // A slow player keeps its song on screen; any other failure shows nothing
+            if e.code() == TIMED_OUT {
+                LAST_RESULT.lock().unwrap().clone().unwrap_or_default()
+            } else {
+                TrackInfo::default()
+            }
         }
     }
 }
@@ -141,7 +180,7 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
     };
     ACTIVE_APP.store(index, Ordering::Relaxed);
 
-    let props = session.TryGetMediaPropertiesAsync()?.join()?;
+    let props = within_time(session.TryGetMediaPropertiesAsync()?)?.join()?;
     let title = props.Title()?.to_string();
     let artist_raw = props.Artist()?.to_string();
     if title.is_empty() {
@@ -242,15 +281,14 @@ fn looks_like_image(b: &[u8]) -> bool {
 }
 
 fn read_artwork(thumb: &IRandomAccessStreamReference) -> windows::core::Result<Option<Vec<u8>>> {
-    let stream = thumb.OpenReadAsync()?.join()?;
+    let stream = within_time(thumb.OpenReadAsync()?)?.join()?;
     let size = stream.Size()? as u32;
     if size == 0 {
         return Ok(None);
     }
     let buffer = Buffer::Create(size)?;
-    let reader = stream
-        .ReadAsync(&buffer, size, InputStreamOptions::ReadAhead)?
-        .join()?;
+    let reader =
+        within_time(stream.ReadAsync(&buffer, size, InputStreamOptions::ReadAhead)?)?.join()?;
     let reader = DataReader::FromBuffer(&reader)?;
     let mut bytes = vec![0u8; size as usize];
     reader.ReadBytes(&mut bytes)?;
