@@ -262,7 +262,10 @@ pub async fn run() {
             axum::routing::put(add_favorite).delete(remove_favorite),
         )
         .route("/version", get(|| async { env!("CARGO_PKG_VERSION") }))
-        .route("/settings", get(crate::settings::get_settings).put(crate::settings::put_settings))
+        .route(
+            "/settings",
+            get(crate::settings::get_settings).put(crate::settings::put_settings),
+        )
         .with_state(state)
         // Serve static files from the "static" directory.
         .fallback_service(ServeDir::new("static"))
