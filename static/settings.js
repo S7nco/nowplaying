@@ -313,6 +313,17 @@ function showNetworkState(state) {
     url.textContent = state.network_url ? "Other devices open: " + state.network_url : "";
 }
 
+// config.toml may have been edited in another program: keep the notices, Restart box and network choices current
+async function refreshState() {
+    if (restarting) return;
+    try {
+        const state = await getState();
+        showState(state);
+        // don't replace a port someone is still typing
+        if (document.activeElement !== portBox) setNetworkInputs(state.settings);
+    } catch { /* not running right now */ }
+}
+
 // Not saved: put the choice and port back to what's in config.toml (half-typed names stay)
 async function saveNetwork(changes) {
     if (!(await save(changes, netStatus))) {
@@ -457,3 +468,5 @@ connectBars();
 loadDetected();
 loadStartup().catch(() => {});
 setInterval(loadDetected, 5000);
+setInterval(refreshState, 2000);
+window.addEventListener("focus", refreshState);
