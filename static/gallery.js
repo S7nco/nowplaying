@@ -492,6 +492,40 @@ function allThemeNames() {
     return themes.flatMap(f => f.themes);
 }
 
+// The installed theme with this name: the exact spelling first, then any capitalization
+function findThemeName(name) {
+    const all = allThemeNames();
+    const lower = name.toLowerCase();
+    return all.find(n => n === name) || all.find(n => n.toLowerCase() === lower);
+}
+
+// Alphabetical, ignoring capitals (the same order as the tray menu)
+function byName(a, b) {
+    const x = a.toLowerCase(), y = b.toLowerCase();
+    return x < y ? -1 : x > y ? 1 : 0;
+}
+
+// Opens the theme used in the address (gallery.html#name)
+function openFromHash() {
+    const name = findThemeName(location.hash.slice(1));
+    if (!name) return;
+    // drop the #name from this entry first, so closing the view stays on the gallery
+    history.replaceState(null, "", location.pathname + location.search);
+    openBig(name);
+}
+
+// The #name was changed while the gallery is open
+window.addEventListener("hashchange", () => {
+    if (history.state?.big) return;     // Back or Forward to an enlarged view: popstate handles it
+    if (bigDialog) {
+        // wait for the open view to finish closing, so it can't close the new one
+        bigDialog.addEventListener("close", openFromHash, { once: true });
+        bigDialog.close();
+    } else {
+        openFromHash();
+    }
+});
+
 function searchQuery() {
     return document.getElementById("search").value.trim().toLowerCase();
 }
@@ -583,7 +617,7 @@ function renderFavorites(rebuild = false) {
     const box = document.getElementById("favorites");
     const known = allThemeNames();
     const wanted = (filter === "all" || filter === "favorites") 
-        ? [...favorites].filter(n => known.includes(n) && matches(n)).sort()
+        ? [...favorites].filter(n => known.includes(n) && matches(n)).sort(byName)
         : [];
 
     if (rebuild || wanted.length === 0) clearViews(box);
@@ -716,12 +750,6 @@ fetch("/themes.json")
     .then(() => {
         render();
         setTimeout(scanTags, 1500);     // after the first previews have had a chance to load
-        // gallery.html#name opens that theme
-        const name = location.hash.slice(1);
-        if (name && allThemeNames().includes(name)) {
-            // drop the #name from this entry first, so closing the view stays on the gallery
-            history.replaceState(null, "", location.pathname + location.search);
-            openBig(name);
-        }
+        openFromHash(); // gallery.html#name opens that theme
     })
     .catch(() => { document.getElementById("count").textContent = "Couldn't load the theme list. Is the server running?"; });

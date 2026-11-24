@@ -28,7 +28,7 @@ fn list() -> &'static Mutex<Vec<String>> {
 /// The favorite theme names, in alphabetical order
 pub fn get() -> Vec<String> {
     let mut names = list().lock().unwrap().clone();
-    names.sort();
+    names.sort_by_key(|n| n.to_lowercase());
     names
 }
 

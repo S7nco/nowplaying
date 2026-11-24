@@ -65,7 +65,7 @@ pub fn list(folder: &str) -> Vec<String> {
             }
         }
     }
-    names.sort();
+    names.sort_by_key(|n| n.to_lowercase());
     names
 }
 

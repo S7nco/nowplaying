@@ -106,16 +106,19 @@ window.setPreviewPaused = (paused) => {
 // Theme Loading
 // ============================================================
 async function loadTheme(name) {
-    let folder;
+    let found;
     try {
         const folders = await (await fetch(`${API}/themes.json`)).json();
-        folder = folders.find(f => f.themes.includes(name))?.name;
+        const all = folders.flatMap(f => f.themes.map(theme => ({ folder: f.name, theme })));
+        // the exact spelling first, then any capitalization (?theme=halloween finds Halloween.css)
+        const lower = name.toLowerCase();
+        found = all.find(t => t.theme === name) || all.find(t => t.theme.toLowerCase() === lower);
     } catch (e) {}
-    if (!folder) { start(); return; }   //not found: a bad theme name still starts the page
+    if (!found) { start(); return; }   //not found: a bad theme name still starts the page
 
     themeLink.addEventListener("load", start, { once: true });
     themeLink.addEventListener("error", start, { once: true });
-    themeLink.href = `themes/${folder}/${name}.css`;
+    themeLink.href = `themes/${found.folder}/${found.theme}.css`;
 }
 
 // Optional page background from the URL (?bg=black). Black in a browser, none inside OBS.
