@@ -114,7 +114,7 @@ fn check(c: &Config, errors: &mut Errors) {
     if !(-150.0..=0.0).contains(&c.eq_ceil_db) {
         bad("eq_ceil_db", "Must be between -150 and 0");
     } else if c.eq_ceil_db <= c.eq_floor_db {
-        bad("eq_ceil_db", "Must be higher than eq_floor_db");
+        bad("eq_ceil_db", "Ceiling must be higher than the floor");
     }
     if !(-10.0..=10.0).contains(&c.eq_tilt_db) {
         bad("eq_tilt_db", "Must be between -10 and 10");

@@ -54,8 +54,13 @@ function showState(state) {
 // ==============================
 
 function setStatus(target, text, bad = false) {
+    clearTimeout(target.clearTimer);
     target.textContent = text;
     target.classList.toggle("bad", bad);
+    // "Saved" goes away by itself; errors stay until the next change, so they can be read
+    if (text === "Saved") {
+        target.clearTimer = setTimeout(() => { target.textContent = ""; }, 2000);
+    }
 }
 
 async function save(changes, statusEl) {
@@ -102,26 +107,41 @@ function showValue(input) {
     input.nextElementSibling.textContent = Number(input.value).toFixed(decimals) + " dB";
 }
 
-// Not saved: put the sliders back to what's in config.toml
+// Slider changes waiting to be saved, so moving two quickly saves both
+let eqPending = {};
+let eqTimer;
+
+function saveEqPending() {
+    const changes = eqPending;
+    eqPending = {};
+    saveEq(changes);
+}
+
+// Not saved: put the sliders back to what's in config.toml (unless they've been moved again)
 async function saveEq(changes) {
-    if (!(await save(changes, eqStatus))) {
+    if (await save(changes, eqStatus)) return;
+    try {
         const state = await getState();
-        EQ.forEach(name => setSlider(name, state.settings[name]));
-    }
+        Object.keys(changes).forEach(name => {
+            if (!(name in eqPending)) setSlider(name, state.settings[name]);
+        });
+    } catch { /* not running right now */ }
 }
 
 // Save once the slider has rested for a moment, not on every pixel of a drag
-let eqTimer;
 EQ.forEach(name => {
     const input = document.getElementById(name);
     input.addEventListener("input", () => {
         showValue(input);
+        eqPending[name] = Number(input.value);
         clearTimeout(eqTimer);
-        eqTimer = setTimeout(() => saveEq({ [name]: Number(input.value) }), 300);
+        eqTimer = setTimeout(saveEqPending, 300);
     });
 });
 
 document.getElementById("eq-reset").addEventListener("click", () => {
+    clearTimeout(eqTimer);
+    eqPending = {};
     const changes = {};
     EQ.forEach(name => {
         changes[name] = defaults[name];
