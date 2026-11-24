@@ -248,10 +248,13 @@ fn start_broadcasters(state: AppState) {
 
 /// POST /restart: the settings page's Restart button, after a port or network change.
 /// Only from this PC (guard.rs refuses changes from other devices).
-async fn restart() -> StatusCode {
+async fn restart() -> axum::response::Response {
+    if let Some(problem) = crate::settings::restart_problem() {
+        return (StatusCode::CONFLICT, problem).into_response();
+    }
     crate::log("restart requested from the settings page");
     crate::tray::RESTART_REQUESTED.store(true, std::sync::atomic::Ordering::Relaxed);
-    StatusCode::NO_CONTENT
+    StatusCode::NO_CONTENT.into_response()
 }
 
 /// Starts the audio capture, then the HTTP server, and handles incoming requests

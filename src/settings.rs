@@ -80,6 +80,13 @@ fn apply(changes: &Map<String, Value>) -> Result<(), Errors> {
         return Err(errors);
     }
 
+    // A new port or address must really work, or the next Restart would close the app
+    if changes.contains_key("port") || changes.contains_key("bind_address") {
+        if let Some((name, message)) = network_problem(candidate.port, &candidate.bind_address) {
+            return Err(one_error(name, message));
+        }
+    }
+
     write(changes)
         .map_err(|e| one_error("config.toml", format!("couldn't save config.toml: {e}")))?;
     // Use them now. (The file watcher also notices, a moment later, but finds nothing new)
@@ -130,6 +137,58 @@ fn check(c: &Config, errors: &mut Errors) {
             "allowed_hosts",
             "Wildcards aren't supported; list each name",
         );
+    }
+}
+
+/// Ports browsers refuse to open, even when the app can listen on them (the "bad ports" in the Fetch standard)
+const BROWSER_BLOCKED_PORTS: &[u16] = &[
+    1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 69, 77, 79, 87, 95, 101, 102,
+    103, 104, 109, 110, 111, 113, 115, 117, 119, 123, 135, 137, 139, 143, 161, 179, 389, 427, 465,
+    512, 513, 514, 515, 526, 530, 531, 532, 540, 548, 554, 556, 563, 587, 601, 636, 989, 990, 993,
+    995, 1719, 1720, 1723, 2049, 3659, 4045, 4190, 5060, 5061, 6000, 6566, 6665, 6666, 6667, 6668,
+    6669, 6679, 6697, 10080,
+];
+
+/// Why the app couldn't run on this port and address: (setting name, message). None = it can
+fn network_problem(port: u16, bind: &str) -> Option<(&'static str, String)> {
+    let running = config::get();
+    if port == running.port && bind == running.bind_address {
+        return None; // what the app is using right now
+    }
+    if BROWSER_BLOCKED_PORTS.contains(&port) {
+        return Some((
+            "port",
+            format!("Browsers and OBS refuse to open port {port}. Try another, like 5001."),
+        ));
+    }
+    // This app already holds its own port, so for that one only the address can be tested
+    let test_port = if port == running.port { 0 } else { port };
+    let error = std::net::TcpListener::bind((bind, test_port)).err()?;
+    Some(match error.kind() {
+        std::io::ErrorKind::AddrInUse => (
+            "port",
+            format!("Port {port} is already used by another program. Try another."),
+        ),
+        std::io::ErrorKind::PermissionDenied => (
+            "port",
+            format!("Windows has reserved port {port}. Try another, like 5001."),
+        ),
+        std::io::ErrorKind::AddrNotAvailable => (
+            "bind_address",
+            format!("{bind} isn't an address of this PC."),
+        ),
+        _ => (
+            "bind_address",
+            format!("Can't listen on {bind}:{port}: {error}"),
+        ),
+    })
+}
+
+/// Why a Restart would fail, checked first so it can't close the app and leave nothing running
+pub fn restart_problem() -> Option<String> {
+    match config::read_file() {
+        Ok((file, _)) => network_problem(file.port, &file.bind_address).map(|(_, message)| message),
+        Err(e) => Some(format!("config.toml has an error. Fix it first: {e}")),
     }
 }
 

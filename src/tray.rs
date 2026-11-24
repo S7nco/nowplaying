@@ -368,7 +368,12 @@ pub fn run(shared: Status) {
                     crate::show_message(&e, true);
                 }
             }
-            Some(Action::Restart) => restart_app(),
+            Some(Action::Restart) => match crate::settings::restart_problem() {
+                Some(problem) => {
+                    crate::show_message(&format!("Now Playing didn't restart.\n\n{problem}"), true)
+                }
+                None => restart_app(),
+            },
             Some(Action::Quit) => unsafe { PostQuitMessage(0) },
             None => {}
         }
