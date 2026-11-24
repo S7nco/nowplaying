@@ -105,20 +105,35 @@ window.setPreviewPaused = (paused) => {
 // ============================================================
 // Theme Loading
 // ============================================================
-async function loadTheme(name) {
-    let found;
-    try {
-        const folders = await (await fetch(`${API}/themes.json`)).json();
-        const all = folders.flatMap(f => f.themes.map(theme => ({ folder: f.name, theme })));
-        // the exact spelling first, then any capitalization (?theme=halloween finds Halloween.css)
-        const lower = name.toLowerCase();
-        found = all.find(t => t.theme === name) || all.find(t => t.theme.toLowerCase() === lower);
-    } catch (e) {}
-    if (!found) { start(); return; }   //not found: a bad theme name still starts the page
+// Asks for the theme list until the server answers (during an app restart it's gone for a few seconds)
+async function fetchThemeFolders() {
+    while (true) {
+        try {
+            const res = await fetch(`${API}/themes.json`, { cache: "no-store" });
+            if (res.ok) return await res.json();
+        } catch (e) {}
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+}
 
+async function loadTheme(name) {
+    const folders = await fetchThemeFolders();
+    const all = folders.flatMap(f => f.themes.map(theme => ({ folder: f.name, theme })));
+    // the exact spelling first, then any capitalization (?theme=halloween finds Halloween.css)
+    const lower = name.toLowerCase();
+    const found = all.find(t => t.theme === name) || all.find(t => t.theme.toLowerCase() === lower);
+    if (!found) { start(); return; }    // not found: a bad theme name still starts the page
+
+    const href = `themes/${found.folder}/${found.theme}.css`;
+    let tries = 0;
     themeLink.addEventListener("load", start, { once: true });
-    themeLink.addEventListener("error", start, { once: true });
-    themeLink.href = `themes/${found.folder}/${found.theme}.css`;
+    themeLink.addEventListener("error", () => { 
+        tries++;
+        if (tries >= 5) { start(); return; }    // the file really can't be loaded: use the base style
+        // a new address, because setting the same one again wouldn't load it again
+        setTimeout(() => { themeLink.href = `${href}?retry=${tries}`; }, 1000);
+    });
+    themeLink.href = href;
 }
 
 // Optional page background from the URL (?bg=black). Black in a browser, none inside OBS.
