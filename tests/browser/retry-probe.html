@@ -1,0 +1,19 @@
+<!doctype html>
+<!-- The server refuses the first two /themes.json requests here: the overlay must still end up with its theme -->
+<body>
+<script>
+(async () => {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const f = document.createElement("iframe");
+    f.style.cssText = "width:900px;height:700px;position:fixed;left:-2000px";
+    f.src = "/overlay.html?theme=neon";
+    document.body.appendChild(f);
+    await new Promise(r => { f.onload = r; });
+    for (let i = 0; i < 400 && !f.contentWindow.overlayReady; i++) await sleep(25);
+    await fetch("/__result", { method: "POST", body: JSON.stringify({
+        started: !!f.contentWindow.overlayReady,
+        theme: f.contentDocument.getElementById("theme-link").getAttribute("href") || "(none)",
+    }) });
+})();
+</script>
+</body>

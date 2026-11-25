@@ -1,0 +1,81 @@
+<!doctype html>
+<!-- Loads every theme in a hidden frame, feeds it the same song data, and records what it shows.
+     Served by run.ps1 at /__probe/overlay-probe.html -->
+<body>
+<script>
+(async () => {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const folders = await (await fetch("/themes.json")).json();
+    const names = folders.flatMap(f => f.themes);
+    const long = "A very long song title that keeps going and going so it has to scroll inside every theme box";
+    const scenarios = [
+        ["s1 normal", { title: "Song Title", artist: "Artist", album: "Album", artwork: "/cover-1.png", position: 10, duration: 200, playing: true }],
+        ["s2 long title", { title: long, artist: "Artist", album: "Album", artwork: "/cover-1.png", position: 10, duration: 200, playing: true }],
+        ["s3 no artist or album", { title: "Second Song", artist: null, album: null, artwork: "/cover-1.png", position: 10, duration: 200, playing: true }],
+        ["s4 no cover", { title: "Third Song", artist: "Artist", album: "Album", artwork: null, position: 10, duration: 200, playing: true }],
+        ["s5 live radio", { title: "Live Station", artist: "Radio", album: null, artwork: "/cover-2.png", position: null, duration: 0, playing: true }],
+        ["s6 paused", { title: "Fourth Song", artist: "Artist", album: "Album", artwork: "/cover-2.png", position: 50, duration: 200, playing: false }],
+        ["s7 nothing playing", { title: null, artist: null, album: null, artwork: null, position: null, duration: null, playing: null }],
+        ["s8 over an hour", { title: "Fifth Song", artist: "Artist", album: "Album", artwork: "/cover-1.png", position: 10, duration: 3725, playing: true }],
+    ];
+
+    async function open(query) {
+        const f = document.createElement("iframe");
+        f.style.cssText = "width:900px;height:700px;position:fixed;left:-2000px";
+        f.src = "/overlay.html?" + query;
+        document.body.appendChild(f);
+        await new Promise(r => { f.onload = r; });
+        for (let i = 0; i < 250 && !f.contentWindow.overlayReady; i++) await sleep(20);
+        await sleep(60);
+        return f;
+    }
+
+    function snap(f) {
+        const w = f.contentWindow, d = f.contentDocument;
+        const o = d.getElementById("overlay"), r = o.getBoundingClientRect(), a = d.getElementById("artwork");
+        const text = id => {
+            const e = d.getElementById(id);
+            if (!e || w.getComputedStyle(e).display === "none") return "(hidden)";
+            return e.firstElementChild ? (e.firstElementChild.dataset.text ?? e.textContent) : e.textContent;
+        };
+        return {
+            ready: !!w.overlayReady,
+            phase: o.dataset.phase ?? "",
+            live: o.dataset.live ?? "",
+            playing: o.dataset.playing ?? "",
+            size: Math.round(r.width) + "x" + Math.round(r.height),
+            title: text("title"), artist: text("artist"), album: text("album"), line: text("line"),
+            scrolling: [...d.querySelectorAll(".marquee.scrolling")].map(e => e.id).join(","),
+            art: a.hidden ? "hidden" : (a.getAttribute("src") || "none").replace(/.*\//, ""),
+            cover: (o.style.getPropertyValue("--cover") || "").replace(/.*\//, "").replace(/"\)$/, ""),
+            progress: Math.round(parseFloat(d.getElementById("progress-bar").style.width || "0")),
+            time: [d.getElementById("time-elapsed")?.textContent, d.getElementById("time-total")?.textContent].join("/"),
+            errors: w.__probeErrors || "",
+        };
+    }
+
+    const themes = {};
+    for (const name of names) {
+        const f = await open("theme=" + encodeURIComponent(name));
+        const rows = { "s0 before any data": snap(f) };
+        for (const [label, data] of scenarios) {
+            f.contentWindow.applyNowPlaying(data);
+            await sleep(300);
+            rows[label] = snap(f);
+        }
+        themes[name] = rows;
+        f.remove();
+    }
+
+    // Theme names in the address. Keys avoid differing only by case (PowerShell 5 can't read those)
+    const names2 = {};
+    for (const [key, query] of [["exact neon", "neon"], ["upper NEON", "NEON"], ["lower halloween", "halloween"], ["unknown", "no-such-theme"]]) {
+        const f = await open("theme=" + query);
+        names2[key] = { theme: f.contentDocument.getElementById("theme-link").getAttribute("href") || "(none)", started: !!f.contentWindow.overlayReady };
+        f.remove();
+    }
+
+    await fetch("/__result", { method: "POST", body: JSON.stringify({ themes, themeNames: names2 }) });
+})();
+</script>
+</body>
