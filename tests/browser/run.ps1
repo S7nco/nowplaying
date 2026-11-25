@@ -160,6 +160,9 @@ Test-Check "the theme loads after the theme list fails twice (0.3.0 stayed unsty
 Test-Check "gallery.html#HALLOWEEN opens Halloween" ($now.galleryHash.opened -eq "Halloween") $now.galleryHash.opened
 Test-Check "gallery tag scan finishes" ([bool]$now.gallery.tagChips) "no tag chips"
 Test-Check "favorites sort ignoring capitals (0.3.0 put Halloween first)" ($now.gallery.favorites -eq "blurred,Halloween,neon") $now.gallery.favorites
+Test-Check "Copy URL goes back to its label after two quick clicks (0.3.1 stayed on Copied!)" ($now.gallery.copyLabelAfterTwoClicks -eq "Copy URL") $now.gallery.copyLabelAfterTwoClicks
+Test-Check "without the clipboard API, the enlarged view copies from a box inside it (0.3.1 couldn't)" ($now.gallery.copyFocusWithoutClipboard -eq "TEXTAREA in the view") $now.gallery.copyFocusWithoutClipboard
+Test-Check "a copy that fails doesn't say Copied! (0.3.1 did)" ($now.gallery.copyLabelWhenItFails -and $now.gallery.copyLabelWhenItFails -ne "Copied!") $now.gallery.copyLabelWhenItFails
 Test-Check "no script errors in the gallery" (-not $now.gallery.errors) $now.gallery.errors
 Test-Check "two EQ sliders moved quickly are both saved (0.3.0 lost one)" ($now.settings.twoSlidersSaved -match 'eq_ceil_db":-20' -and $now.settings.twoSlidersSaved -match 'eq_floor_db":-90') $now.settings.twoSlidersSaved
 Test-Check "'Saved' clears after a couple of seconds" (-not $now.settings.statusLater) $now.settings.statusLater

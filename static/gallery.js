@@ -300,27 +300,46 @@ function themeUrl(name, scale = 1) {
     return scale === 1 ? url : `${url}&scale=${scale}`;
 }
 
+// Copies text and says on the button whether it worked
 function copy(text, button) {
-    const done = () => {
-        const old = button.textContent;
-        button.textContent = "Copied!";
-        button.classList.add("done");
-        setTimeout(() => { button.textContent = old; button.classList.remove("done"); }, 1200);
+    const show = (label, worked) => {
+        // remember the real label once, so quick clicks can't make "Copied!" stick
+        if (!button.dataset.label) button.dataset.label = button.textContent;
+        clearTimeout(button.copyTimer);
+        button.textContent = label;
+        button.classList.toggle("done", worked);
+        button.classList.toggle("failed", !worked);
+        button.copyTime = setTimeout(() => {
+            button.textContent = button.dataset.label;
+            button.classList.remove("done", "failed");
+        }, worked ? 1200 : 2500);
+    };
+    const finish = worked => {
+        show(worked ? "Copied!" : "Couldn't copy", worked);
+        // in the enlarged view, select the address so it can be copied with Ctrl+C
+        if (!worked) button.closest("dialog")?.querySelector(".big-url")?.select();
     };
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(done).catch(() => { fallbackCopy(text, done); });
+        navigator.clipboard.writeText(text).then(() => finish(true)).catch(() => finish(fallbackCopy(text, button)));
     } else {
-        fallbackCopy(text, done);
+        finish(fallbackCopy(text, button)); // plain http from another device has no clipboard API
     }
 }
-function fallbackCopy(text, done) {
+
+// The older way to copy. Returns whether it worked
+function fallbackCopy(text, button) {
     const box = document.createElement("textarea");
     box.value = text;
-    document.body.appendChild(box);
+    box.readOnly = true;
+    box.className = "copy-box";
+    // inside the enlarged view, the box must be in the view: the page behind it can't take focus while it's open
+    (button.closest("dialog") || document.body).appendChild(box);
+    box.focus();
     box.select();
-    document.execCommand("copy");
+    let worked = false;
+    try { worked = document.execCommand("copy"); } catch { /* refused */ }
     box.remove();
-    done();
+    return worked;
 }
 
 // ====================================================
