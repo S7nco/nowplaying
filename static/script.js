@@ -274,7 +274,7 @@ function tickProgressBar() {
 function updateArtwork(data) {
     artworkEl.hidden = !data.artwork;
     if (!data.artwork) {
-        // No cover for this song: don't leave tthe last one behind blurred themes
+        // No cover for this song: don't leave the last one behind blurred themes
         if (lastCover) {
             lastCover = "";
             overlayEl.style.removeProperty("--cover");
