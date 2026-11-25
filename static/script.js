@@ -273,7 +273,15 @@ function tickProgressBar() {
 // Sets the artwork image and the blurred variable (--cover)
 function updateArtwork(data) {
     artworkEl.hidden = !data.artwork;
-    if (!data.artwork) return;
+    if (!data.artwork) {
+        // No cover for this song: don't leave tthe last one behind blurred themes
+        if (lastCover) {
+            lastCover = "";
+            overlayEl.style.removeProperty("--cover");
+            artworkEl.removeAttribute("src");
+        }
+        return; 
+    }
 
     const src = data.artwork.startsWith("/") ? API + data.artwork : data.artwork;
 
