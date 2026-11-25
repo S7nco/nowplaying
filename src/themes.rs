@@ -65,11 +65,56 @@ pub fn list(folder: &str) -> Vec<String> {
             }
         }
     }
-    names.sort_by_key(|n| n.to_lowercase());
+    sort_names(&mut names);
     names
+}
+
+/// Alphabetical, ignoring capitals (the gallery's byName uses the same order)
+pub fn sort_names(names: &mut [String]) {
+    names.sort_by_key(|n| n.to_lowercase());
 }
 
 /// Every installed theme name, from all folders
 pub fn installed() -> Vec<String> {
     folders().iter().flat_map(|f| list(f)).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn theme_names_use_only_safe_characters() {
+        for ok in [
+            "default",
+            "my-theme",
+            "my_theme",
+            "Halloween",
+            "cp2077-radio-pop",
+        ] {
+            assert!(valid_name(ok), "{ok}");
+        }
+        for bad in [
+            "",
+            "my theme",
+            "neon.v2",
+            "../config",
+            "a/b",
+            "a\\b",
+            "<x>",
+            &"a".repeat(65),
+        ] {
+            assert!(!valid_name(bad), "{bad:?}");
+        }
+    }
+
+    // 0.3.0 sorted capitals first, so Halloween came before cassette (fixed in 0.3.1)
+    #[test]
+    fn names_sort_alphabetically_ignoring_capitals() {
+        let mut names: Vec<String> = ["winter", "Halloween", "cassette", "blurred"]
+            .map(String::from)
+            .to_vec();
+        sort_names(&mut names);
+        assert_eq!(names, ["blurred", "cassette", "Halloween", "winter"]);
+    }
 }

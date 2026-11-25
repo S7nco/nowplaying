@@ -294,3 +294,30 @@ fn read_artwork(thumb: &IRandomAccessStreamReference) -> windows::core::Result<O
     reader.ReadBytes(&mut bytes)?;
     Ok(Some(bytes))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn player_lists_are_split_and_lowercased() {
+        assert_eq!(
+            split_list("AmpLibraryAgent.exe, Spotify.exe"),
+            ["amplibraryagent.exe", "spotify.exe"]
+        );
+        assert_eq!(split_list(" a ,, B ,"), ["a", "b"]);
+        assert!(split_list("").is_empty());
+    }
+
+    #[test]
+    fn only_real_images_count_as_covers() {
+        let mut jpeg = vec![0xFF, 0xD8];
+        jpeg.resize(300, 0);
+        let mut png = vec![0x89, 0x50, 0x4E, 0x47];
+        png.resize(300, 0);
+        assert!(looks_like_image(&jpeg));
+        assert!(looks_like_image(&png));
+        assert!(!looks_like_image(&[0xFF, 0xD8, 0, 0]));
+        assert!(!looks_like_image(&vec![0u8; 300]));
+    }
+}

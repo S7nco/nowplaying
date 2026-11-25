@@ -260,3 +260,148 @@ fn to_toml(value: &Value, decimal: bool) -> Option<toml_edit::Value> {
         _ => return None,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample() -> Config {
+        Config::default()
+    }
+
+    #[test]
+    fn new_setting_goes_under_its_example() {
+        let text = "# port = 1234\nport_note = 1\n# bind_address = \"127.0.0.1\"\n# bind_address = \"0.0.0.0\"\n\neq_tilt_db = 3.0\n";
+        let out = insert_line(text, "bind_address", "bind_address = \"0.0.0.0\"");
+        assert_eq!(
+            out,
+            "# port = 1234\nport_note = 1\n# bind_address = \"127.0.0.1\"\n# bind_address = \"0.0.0.0\"\nbind_address = \"0.0.0.0\"\n\neq_tilt_db = 3.0\n"
+        );
+    }
+
+    #[test]
+    fn new_setting_without_an_example_goes_at_the_end() {
+        assert_eq!(
+            insert_line("port = 5000\n", "allowed_hosts", "allowed_hosts = []"),
+            "port = 5000\n\nallowed_hosts = []\n"
+        );
+        assert_eq!(insert_line("", "port", "port = 5001"), "port = 5001\n");
+    }
+
+    #[test]
+    fn similar_names_are_not_mistaken_for_the_example() {
+        let out = insert_line("# port_extra = 1\nx = 1\n", "port", "port = 5001");
+        assert!(out.ends_with("x = 1\n\nport = 5001\n"), "{out:?}");
+    }
+
+    #[test]
+    fn windows_line_endings_are_kept() {
+        let out = insert_line("# port = 1\r\nx = 1\r\n", "port", "port = 5001");
+        assert_eq!(out, "# port = 1\r\nport = 5001\r\nx = 1\r\n");
+    }
+
+    #[test]
+    fn sensible_settings_pass() {
+        let mut errors = Errors::new();
+        check(&sample(), &mut errors);
+        assert!(errors.is_empty(), "{errors:?}");
+    }
+
+    #[test]
+    fn bad_settings_are_refused_with_a_message() {
+        let cases: Vec<(&str, Box<dyn Fn(&mut Config)>)> = vec![
+            ("port", Box::new(|c| c.port = 0)),
+            (
+                "bind_address",
+                Box::new(|c| c.bind_address = "nonsense".into()),
+            ),
+            ("eq_floor_db", Box::new(|c| c.eq_floor_db = -200.0)),
+            (
+                "eq_ceil_db",
+                Box::new(|c| {
+                    c.eq_floor_db = -35.0;
+                    c.eq_ceil_db = -40.0;
+                }),
+            ),
+            ("eq_tilt_db", Box::new(|c| c.eq_tilt_db = 20.0)),
+            (
+                "app_id_match",
+                Box::new(|c| c.app_id_match = "applemusic".into()),
+            ),
+            (
+                "tray_themes",
+                Box::new(|c| c.tray_themes = vec!["my theme".into()]),
+            ),
+            (
+                "allowed_hosts",
+                Box::new(|c| c.allowed_hosts = vec!["*.lan".into()]),
+            ),
+        ];
+        for (name, change) in cases {
+            let mut c = sample();
+            change(&mut c);
+            let mut errors = Errors::new();
+            check(&c, &mut errors);
+            assert!(
+                errors.contains_key(name),
+                "{name} should be refused, got {errors:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn ceiling_message_is_plain_english() {
+        let mut c = sample();
+        c.eq_floor_db = -35.0;
+        c.eq_ceil_db = -40.0;
+        let mut errors = Errors::new();
+        check(&c, &mut errors);
+        assert_eq!(
+            errors["eq_ceil_db"],
+            "Ceiling must be higher than the floor"
+        );
+    }
+
+    // 0.3.0: a port in use made Restart close the app (fixed in 0.3.1)
+    #[test]
+    fn ports_that_cannot_work_are_refused() {
+        let held = std::net::TcpListener::bind(("127.0.0.1", 0)).unwrap();
+        let used = held.local_addr().unwrap().port();
+        assert_eq!(
+            network_problem(used, "127.0.0.1").map(|p| p.0),
+            Some("port")
+        );
+        assert_eq!(
+            network_problem(6000, "127.0.0.1").map(|p| p.0),
+            Some("port")
+        );
+        assert_eq!(
+            network_problem(10080, "127.0.0.1").map(|p| p.0),
+            Some("port")
+        );
+        assert_eq!(
+            network_problem(5002, "203.0.113.5").map(|p| p.0),
+            Some("bind_address")
+        );
+        assert_eq!(
+            network_problem(5002, " 127.0.0.1").map(|p| p.0),
+            Some("bind_address")
+        );
+    }
+
+    #[test]
+    fn ports_that_work_are_allowed() {
+        let free = std::net::TcpListener::bind(("127.0.0.1", 0))
+            .unwrap()
+            .local_addr()
+            .unwrap()
+            .port();
+        assert_eq!(network_problem(free, "127.0.0.1"), None);
+        // the app's own port and address, even while it's running and holding them
+        let running = config::get();
+        assert_eq!(network_problem(running.port, &running.bind_address), None);
+        // only the address changes: the app's own port mustn't count as "in use"
+        let _held = std::net::TcpListener::bind(("127.0.0.1", running.port));
+        assert_eq!(network_problem(running.port, "0.0.0.0"), None);
+    }
+}
