@@ -55,9 +55,35 @@ pub struct TrackInfo {
     pub playing: Option<bool>,
 }
 
-// Remembered between requests
-static LAST_TRACK: Mutex<Option<(String, String)>> = Mutex::new(None);
-static LAST_ARTWORK: Mutex<Option<String>> = Mutex::new(None);
+// The current song's cover. Players can report a placeholder first (Apple Music does for about a second when it starts)
+// So the cover is checked again for a while after each song starts.
+const COVER_RECHECK: Duration = Duration::from_secs(15);
+
+struct Cover {
+    song: (String, String), // title and artist
+    url: Option<String>,    // what the overlay loads, once a cover has been saved
+    fingerprint: u64,       // of the saved image, to notice when the player reports a different one
+    since: Instant,         // when this song was first seen
+}
+
+static COVER: Mutex<Option<Cover>> = Mutex::new(None);
+
+/// A cover is final once it's been saved and the song has been playing for a while
+fn cover_settled(cover: &Option<Cover>, song: &(String, String)) -> bool {
+    matches!(cover, Some(c) if c.song == *song && c.url.is_some() && c.since.elapsed() >= COVER_RECHECK)
+}
+
+/// Save this image unless it's the one already saved
+fn cover_changed(cover: &Cover, fingerprint: u64) -> bool {
+    cover.url.is_none() || cover.fingerprint != fingerprint
+}
+
+fn fingerprint(bytes: &[u8]) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    bytes.hash(&mut h);
+    h.finish()
+}
 
 // Which player is active: a position in the app_id_match list (audio.rs uses it to pick the process)
 pub static ACTIVE_APP: AtomicUsize = AtomicUsize::new(0);
@@ -220,28 +246,39 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
             .filter(|a| !a.is_empty())
     });
 
-    // Only fetch artwork when the song changes
+    // Fetch the cover when the song changes, and keep checking it for a while in case it was a placeholder
     let key = (title.clone(), artist_raw.clone());
-    let mut last_track = LAST_TRACK.lock().unwrap();
-    let mut last_art = LAST_ARTWORK.lock().unwrap();
-    if last_track.as_ref() != Some(&key) {
-        *last_track = None;
-        *last_art = None;
+    let mut cover = COVER.lock().unwrap();
+    if !cover_settled(&cover, &key) {
+        if cover.as_ref().is_none_or(|c| c.song != key) {
+            *cover = Some(Cover {
+                song: key.clone(),
+                url: None,
+                fingerprint: 0,
+                since: Instant::now(),
+            });
+        }
+        let current = cover.as_mut().unwrap();
         match props.Thumbnail() {
             Ok(thumb) => match read_artwork(&thumb) {
                 Ok(Some(bytes)) if looks_like_image(&bytes) => {
-                    match crate::files::write_atomic("static/cover.jpg", &bytes) {
-                        Ok(()) => {
-                            let secs = SystemTime::now()
-                                .duration_since(UNIX_EPOCH)
-                                .unwrap()
-                                .as_secs_f64();
-                            *last_art = Some(format!("/cover.jpg?timestamp={secs}"));
-                            *last_track = Some(key);
-                        }
-                        // e.g. a read-only folder; it's tried again on the next read, but logged once per song
-                        Err(e) => {
-                            log_artwork_once(&key, format!("Artwork: couldn't save the cover: {e}"))
+                    let print = fingerprint(&bytes);
+                    // the same image as the one already saved needs nothing
+                    if cover_changed(current, print) {
+                        match crate::files::write_atomic("static/cover.jpg", &bytes) {
+                            Ok(()) => {
+                                let secs = SystemTime::now()
+                                    .duration_since(UNIX_EPOCH)
+                                    .unwrap()
+                                    .as_secs_f64();
+                                current.url = Some(format!("/cover.jpg?timestamp={secs}"));
+                                current.fingerprint = print;
+                            }
+                            // e.g. a read-only folder; it's tried again on the next read, but logged once per song
+                            Err(e) => log_artwork_once(
+                                &key,
+                                format!("Artwork: couldn't save the cover: {e}"),
+                            ),
                         }
                     }
                 }
@@ -263,7 +300,7 @@ fn read_track_inner() -> windows::core::Result<Option<TrackInfo>> {
         title: Some(title),
         artist: Some(artist).filter(|a| !a.is_empty()), // no artist (e.g. some podcasts): null
         album,
-        artwork: last_art.clone(),
+        artwork: cover.as_ref().and_then(|c| c.url.clone()),
         position: Some(position),
         duration: Some(duration),
         percent: Some(percent),
@@ -319,5 +356,56 @@ mod tests {
         assert!(looks_like_image(&png));
         assert!(!looks_like_image(&[0xFF, 0xD8, 0, 0]));
         assert!(!looks_like_image(&vec![0u8; 300]));
+    }
+}
+
+#[cfg(test)]
+mod cover_tests {
+    use super::*;
+
+    fn song(t: &str) -> (String, String) {
+        (t.to_string(), "Artist".to_string())
+    }
+
+    fn cover(t: &str, url: Option<&str>, print: u64, age_secs: u64) -> Option<Cover> {
+        Some(Cover {
+            song: song(t),
+            url: url.map(String::from),
+            fingerprint: print,
+            since: Instant::now() - Duration::from_secs(age_secs),
+        })
+    }
+
+    // 0.3.1: Apple Music's placeholder at startup stayed for the whole first song
+    #[test]
+    fn a_new_cover_replaces_the_placeholder_while_the_song_is_new() {
+        let c = cover(
+            "First",
+            Some("/cover.jpg?timestamp=1"),
+            fingerprint(b"placeholder"),
+            1,
+        );
+        assert!(!cover_settled(&c, &song("First")));
+        assert!(cover_changed(
+            c.as_ref().unwrap(),
+            fingerprint(b"real cover")
+        ));
+        assert!(!cover_changed(
+            c.as_ref().unwrap(),
+            fingerprint(b"placeholder")
+        ));
+    }
+
+    #[test]
+    fn the_cover_settles_after_a_while() {
+        let c = cover("First", Some("/cover.jpg?timestamp=1"), 1, 20);
+        assert!(cover_settled(&c, &song("First")));
+        assert!(!cover_settled(&c, &song("Second")));
+    }
+
+    #[test]
+    fn a_song_without_a_cover_keeps_trying() {
+        assert!(!cover_settled(&cover("First", None, 0, 60), &song("First")));
+        assert!(!cover_settled(&None, &song("First")));
     }
 }
