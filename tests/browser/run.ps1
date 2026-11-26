@@ -80,7 +80,9 @@ function Invoke-Page($version, $path, [int]$failThemeList = 0) {
     $result = $null
     $listCalls = 0
     $profile = Join-Path $work ("edge-" + [guid]::NewGuid().ToString("N"))
-    $edgeProcess = Start-Process $edge -PassThru -ArgumentList "--headless=new", "--disable-gpu", "--no-first-run", "--window-size=1400,1000", "--user-data-dir=`"$profile`"", "http://localhost:$port$path"
+    # Edge's own log messages go to files, so they don't clutter the results
+    $edgeProcess = Start-Process $edge -PassThru -WindowStyle Hidden -RedirectStandardOutput "$profile.out.log" -RedirectStandardError "$profile.err.log" `
+        -ArgumentList "--headless=new", "--disable-gpu", "--no-first-run", "--log-level=3", "--window-size=1400,1000", "--user-data-dir=`"$profile`"", "http://localhost:$port$path"
     $deadline = (Get-Date).AddSeconds(180)
     while (-not $result -and (Get-Date) -lt $deadline) {
         if (-not $script:pending.Wait(250)) { continue }
@@ -160,6 +162,8 @@ Test-Check "the theme loads after the theme list fails twice (0.3.0 stayed unsty
 Test-Check "gallery.html#HALLOWEEN opens Halloween" ($now.galleryHash.opened -eq "Halloween") $now.galleryHash.opened
 Test-Check "gallery tag scan finishes" ([bool]$now.gallery.tagChips) "no tag chips"
 Test-Check "favorites sort ignoring capitals (0.3.0 put Halloween first)" ($now.gallery.favorites -eq "blurred,Halloween,neon") $now.gallery.favorites
+Test-Check "searching the name shown on a card finds it (0.3.1 needed the file name)" ($now.gallery.searchShownName -eq 1 -and $now.gallery.searchFileName -eq 1) "radio tuner -> $($now.gallery.searchShownName), radio-tuner -> $($now.gallery.searchFileName)"
+Test-Check "a search with no results says so (0.3.1 showed a blank page)" ($now.gallery.noResultsMessage -ne "(blank page)") $now.gallery.noResultsMessage
 Test-Check "Copy URL goes back to its label after two quick clicks (0.3.1 stayed on Copied!)" ($now.gallery.copyLabelAfterTwoClicks -eq "Copy URL") $now.gallery.copyLabelAfterTwoClicks
 Test-Check "without the clipboard API, the enlarged view copies from a box inside it (0.3.1 couldn't)" ($now.gallery.copyFocusWithoutClipboard -eq "TEXTAREA in the view") $now.gallery.copyFocusWithoutClipboard
 Test-Check "a copy that fails doesn't say Copied! (0.3.1 did)" ($now.gallery.copyLabelWhenItFails -and $now.gallery.copyLabelWhenItFails -ne "Copied!") $now.gallery.copyLabelWhenItFails

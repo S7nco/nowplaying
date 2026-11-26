@@ -558,8 +558,12 @@ const activeTags = new Set();   // the tag chips that are on
 const tagBar = document.getElementById("tagFilters");
 
 // Does this theme fit the search box and every selected tag?
+function searchable(text) {
+    return text.toLowerCase().replace(/[-_\s]+/g, " ").trim();
+}
+
 function matches(name) {
-    if (!name.toLowerCase().includes(searchQuery())) return false;
+    if (!searchable(name).includes(searchable(searchQuery()))) return false;
     const tags = themeTags.get(name) || [];
     return [...activeTags].every(t => tags.includes(t));
 }
@@ -718,6 +722,10 @@ function render() {
         grid.className = "grid";
         names.forEach(name => grid.appendChild(makeCard(name)));
         sections.appendChild(grid);
+    }
+    // A search or filter that matches nothing: say so instead of leaving the page blank
+    if (filter !== "favorites" && (query || activeTags.size > 0) && !sections.querySelector(".card")) {
+        sections.appendChild(el("div", { className: "empty" }, "No themes match your search or filters."));
     }
     renderFavorites(true);
     updateCount();

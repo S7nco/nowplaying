@@ -30,6 +30,12 @@
         return document.querySelectorAll("#sections .card").length;
     };
     r.searchNeon = await search("neon");
+    // The card says "Radio Tuner", so that must find it (0.3.1 only matched the file name radio-tuner)
+    r.searchShownName = await search("radio tuner");
+    r.searchFileName = await search("radio-tuner");
+    // Nothing matches: the page must say so (0.3.1 showed a blank page)
+    await search("zzzz");
+    r.noResultsMessage = document.querySelector("#sections .empty")?.textContent || "(blank page)";
     await search("");
     document.querySelector("#tagFilters .chip")?.click();
     await sleep(300);
